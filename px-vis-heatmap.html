@@ -1,0 +1,28 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="../px-vis/px-vis-behavior-common.html">
+
+
+<dom-module id="px-vis-heatmap">
+  <template>
+    My test value is: [[testProp]]
+  </template>
+  <script>
+    Polymer({
+
+      is: "px-vis-heatmap",
+
+      properties:{
+        testProp: {
+          type: String,
+          value: 'test'
+        }
+      },
+
+      ready: function() {
+
+      }
+
+    });
+  </script>
+</dom-module>
