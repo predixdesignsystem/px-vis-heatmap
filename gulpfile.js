@@ -14,6 +14,7 @@ const argv = require('yargs').argv;
 const eslint = require('gulp-eslint');
 const htmlExtract = require('gulp-html-extract');
 const stylelint = require('gulp-stylelint');
+const exec = require('child_process').exec;
 
 const sassOptions = {
   importer: importOnce,
@@ -99,6 +100,16 @@ gulp.task('sass', function() {
     }))
     .pipe(gulp.dest('css'))
     .pipe(browserSync.stream({match: 'css/*.html'}));
+});
+
+gulp.task('generate-api', function(cb) {
+
+  exec(`node_modules/.bin/polymer analyze ${pkg.name}.html > ${pkg.name}-api.json`, function(err, stdout, stderr) {
+    stdout && console.log(stdout); // eslint-disable-line
+    stderr && console.log(stderr); // eslint-disable-line
+    cb(err);
+  });
+
 });
 
 gulp.task('watch', function() {
