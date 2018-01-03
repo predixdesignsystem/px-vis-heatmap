@@ -11,6 +11,10 @@ const gulpif = require('gulp-if');
 const combiner = require('stream-combiner2');
 const bump = require('gulp-bump');
 const argv = require('yargs').argv;
+const eslint = require('gulp-eslint');
+const htmlExtract = require('gulp-html-extract');
+const stylelint = require('gulp-stylelint');
+const exec = require('child_process').exec;
 
 const sassOptions = {
   importer: importOnce,
@@ -20,18 +24,61 @@ const sassOptions = {
   }
 };
 
+gulp.task('lint', ['lint:js', 'lint:html', 'lint:css']);
+
+gulp.task('lint:js', function() {
+  return gulp.src([
+    '*.js',
+    'test/**/*.js'
+  ])
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError('fail'));
+});
+
+gulp.task('lint:html', function() {
+  return gulp.src([
+    '*.html',
+    'demo/**/*.html',
+    'test/**/*.html'
+  ])
+    .pipe(htmlExtract({
+      sel: 'script, code-example code',
+      strip: true
+    }))
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError('fail'));
+});
+
+gulp.task('lint:css', function() {
+  return gulp.src([
+    '*.html',
+    'demo/**/*.html',
+    'test/**/*.html'
+  ])
+    .pipe(htmlExtract({
+      sel: 'style'
+    }))
+    .pipe(stylelint({
+      reporters: [
+        {formatter: 'string', console: true}
+      ]
+    }));
+});
+
 gulp.task('clean', function() {
   return gulp.src(['.tmp', 'css'], {
     read: false
   }).pipe($.clean());
 });
 
-function handleError(err){
-  console.log(err.toString());
-  this.emit('end');
+function handleError(err) {
+  console.log(err.toString()); // eslint-disable-line
+  this.emit('end'); // eslint-disable-line
 }
 
-function buildCSS(){
+function buildCSS() {
   return combiner.obj([
     $.sass(sassOptions),
     $.autoprefixer({
@@ -55,6 +102,16 @@ gulp.task('sass', function() {
     .pipe(browserSync.stream({match: 'css/*.html'}));
 });
 
+gulp.task('generate-api', function(cb) {
+
+  exec(`node_modules/.bin/polymer analyze ${pkg.name}.html > ${pkg.name}-api.json`, function(err, stdout, stderr) {
+    stdout && console.log(stdout); // eslint-disable-line
+    stderr && console.log(stderr); // eslint-disable-line
+    cb(err);
+  });
+
+});
+
 gulp.task('watch', function() {
   gulp.watch(['sass/*.scss'], ['sass']);
 });
@@ -74,24 +131,24 @@ gulp.task('serve', function() {
 
 });
 
-gulp.task('bump:patch', function(){
+gulp.task('bump:patch', function() {
   gulp.src(['./bower.json', './package.json'])
-  .pipe(bump({type:'patch'}))
-  .pipe(gulp.dest('./'));
+    .pipe(bump({type: 'patch'}))
+    .pipe(gulp.dest('./'));
 });
 
-gulp.task('bump:minor', function(){
+gulp.task('bump:minor', function() {
   gulp.src(['./bower.json', './package.json'])
-  .pipe(bump({type:'minor'}))
-  .pipe(gulp.dest('./'));
+    .pipe(bump({type: 'minor'}))
+    .pipe(gulp.dest('./'));
 });
 
-gulp.task('bump:major', function(){
+gulp.task('bump:major', function() {
   gulp.src(['./bower.json', './package.json'])
-  .pipe(bump({type:'major'}))
-  .pipe(gulp.dest('./'));
+    .pipe(bump({type: 'major'}))
+    .pipe(gulp.dest('./'));
 });
 
 gulp.task('default', function(callback) {
-  gulpSequence('clean', 'sass')(callback);
+  gulpSequence('clean', 'sass', 'lint', 'generate-api')(callback);
 });
