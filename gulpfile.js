@@ -11,6 +11,9 @@ const gulpif = require('gulp-if');
 const combiner = require('stream-combiner2');
 const bump = require('gulp-bump');
 const argv = require('yargs').argv;
+const eslint = require('gulp-eslint');
+const htmlExtract = require('gulp-html-extract');
+const stylelint = require('gulp-stylelint');
 
 const sassOptions = {
   importer: importOnce,
@@ -20,18 +23,61 @@ const sassOptions = {
   }
 };
 
+gulp.task('lint', ['lint:js', 'lint:html', 'lint:css']);
+
+gulp.task('lint:js', function() {
+  return gulp.src([
+    '*.js',
+    'test/**/*.js'
+  ])
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError('fail'));
+});
+
+gulp.task('lint:html', function() {
+  return gulp.src([
+    '*.html',
+    'demo/**/*.html',
+    'test/**/*.html'
+  ])
+    .pipe(htmlExtract({
+      sel: 'script, code-example code',
+      strip: true
+    }))
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError('fail'));
+});
+
+gulp.task('lint:css', function() {
+  return gulp.src([
+    '*.html',
+    'demo/**/*.html',
+    'test/**/*.html'
+  ])
+    .pipe(htmlExtract({
+      sel: 'style'
+    }))
+    .pipe(stylelint({
+      reporters: [
+        {formatter: 'string', console: true}
+      ]
+    }));
+});
+
 gulp.task('clean', function() {
   return gulp.src(['.tmp', 'css'], {
     read: false
   }).pipe($.clean());
 });
 
-function handleError(err){
+function handleError(err) {
   console.log(err.toString());
   this.emit('end');
 }
 
-function buildCSS(){
+function buildCSS() {
   return combiner.obj([
     $.sass(sassOptions),
     $.autoprefixer({
@@ -93,5 +139,5 @@ gulp.task('bump:major', function(){
 });
 
 gulp.task('default', function(callback) {
-  gulpSequence('clean', 'sass')(callback);
+  gulpSequence('clean', 'sass', 'lint', 'generate-api')(callback);
 });
