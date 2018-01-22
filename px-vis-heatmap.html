@@ -1,26 +1,184 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../px-vis/px-vis-scale.html">
+<link rel="import" href="../px-vis/px-vis-svg.html">
+<link rel="import" href="../px-vis/px-vis-axis.html">
 
+<link rel="import" href="../px-vis/px-vis-behavior-colors.html">
 <link rel="import" href="../px-vis/px-vis-behavior-common.html">
+<link rel="import" href="../px-vis/px-vis-behavior-chart.html">
 
 
 <dom-module id="px-vis-heatmap">
   <template>
-    My test value is: [[testProp]]
+    <px-vis-svg
+      width="[[width]]"
+      height="[[height]]"
+      margin="[[margin]]"
+      svg="{{svg}}">
+    </px-vis-svg>
+    <px-vis-scale
+      x-axis-type="[[xAxisType]]"
+      y-axis-type="[[yAxisType]]"
+      complete-series-config="[[completeSeriesConfig]]"
+      chart-extents="[[chartExtents]]"
+      data-extents="[[dataExtents]]"
+      width="[[width]]"
+      height="[[height]]"
+      margin="[[margin]]"
+      chart-data="[[chartData]]"
+      x="{{x}}"
+      y="{{y}}"
+      domain-changed="{{domainChanged}}">
+    </px-vis-scale>
+    <!-- y axis -->
+    <px-vis-axis
+      id="yAxis"
+      svg="[[svg]]"
+      axis="[[y]]"
+      margin="[[margin]]"
+      width="[[width]]"
+      height="[[height]]"
+      title="Y Axis"
+      orientation="left"
+      label-position="center"
+      complete-series-config="[[completeSeriesConfig]]"
+      muted-series=[[mutedSeries]]
+      domain-changed="[[domainChanged]]">
+    </px-vis-axis>
+    <!-- x axis -->
+    <px-vis-axis
+      id="xAxis"
+      svg="[[svg]]"
+      axis="[[x]]"
+      margin="[[margin]]"
+      width="[[width]]"
+      height="[[height]]"
+      title="X Axis"
+      orientation="bottom"
+      label-position="center"
+      complete-series-config="[[completeSeriesConfig]]"
+      muted-series=[[mutedSeries]]
+      domain-changed="[[domainChanged]]">
+    </px-vis-axis>
+
   </template>
   <script>
     Polymer({
 
       is: 'px-vis-heatmap',
 
+      behaviors: [
+        PxColorsBehavior.dataVisColors,
+        PxColorsBehavior.dataVisColorTheming,
+        PxColorsBehavior.getSeriesColors,
+        PxVisBehavior.axisTypes,
+        PxVisBehavior.baseSize,
+        PxVisBehavior.completeSeriesConfig,
+        PxVisBehavior.dataset,
+        PxVisBehavior.dataExtents,
+        PxVisBehavior.margins,
+        PxVisBehavior.observerCheck,
+        PxVisBehaviorD3.domainUpdate,
+        PxVisBehaviorChart.axisConfigs,
+        PxVisBehaviorChart.subConfiguration
+      ],
+
       properties: {
-        testProp: {
-          type: String,
-          value: 'test'
+
+        /**
+        * Container for the data object that drives the chart.
+        */
+        chartData: {
+          type: Array
+        },
+
+        /**
+        * The width of the elem; generally the width of the charting area for most components
+        */
+        width: {
+          type: Number,
+          value: 500,
+          notify: true
+        },
+
+        /**
+        * The height of the component; generally the height of the charting area for most components.
+        */
+        height: {
+          type: Number,
+          value: 500,
+          notify: true
+        },
+
+        /**
+        * Defines the base margin for the chart. Calcs are run to add to the
+        * margin to accommodate axes and other elements which exist within the SVG frame,
+        * but outside the chart frame.
+        */
+        margin: {
+          type: Object,
+          value: function() {
+            return {
+              'top': 10,
+              'right': 10,
+              'bottom': 50,
+              'left': 50
+            };
+          }
+        },
+
+        _colorsAreSet: {
+          type: Boolean,
+          value: false
         }
+
+      },
+
+      observers: [
+        '_updateSeriesConfig(_colorsAreSet)'
+      ],
+
+      listeners: {
+        'px-data-vis-colors-applied': '_colorsSet'
       },
 
       ready: function() {
+        window.chart = this;
+        this.set('chartData', this._getDemoData(5, 5));
+      },
 
+      // TODO: remove
+      _getDemoData: function(xNum, yNum) {
+        const data = [];
+        for (let x = 0; x < xNum; x++) {
+          for (let y = 0; y < yNum; y++) {
+            data.push({
+              x: x,
+              y: y,
+              value: Math.random() * 100
+            });
+          }
+        }
+        return data;
+      },
+
+      _updateSeriesConfig: function() {
+        this.debounce('_updateSeriesConfig', function() {
+          if (this._colorsAreSet) {
+            this.set('completeSeriesConfig', {
+              'mySeries': {
+                'name': 'My-Series',
+                'x': 'x',
+                'y': 'y',
+                'color': this._getColor(0)
+              }
+            });
+          }
+        }, 10);
+      },
+
+      _colorsSet: function() {
+        this.set('_colorsAreSet', true);
       }
 
     });
