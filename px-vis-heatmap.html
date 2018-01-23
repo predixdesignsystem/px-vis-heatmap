@@ -173,28 +173,8 @@
         'px-data-vis-colors-applied': '_colorsSet'
       },
 
-      ready: function() {
-        window.chart = this;
-        this.set('chartData', this._getDemoData(5, 5));
-      },
-
-      // TODO: remove
-      _getDemoData: function(xNum, yNum) {
-        const data = [];
-        for (let x = 0; x < xNum; x++) {
-          for (let y = 0; y < yNum; y++) {
-            data.push({
-              x: x,
-              y: y,
-              value: Math.random() * 100
-            });
-          }
-        }
-        return data;
-      },
-
       _updateCellData: function() {
-        if (!this.chartData || !this.x || !this.y) {
+        if (!this.chartData) {
           return;
         }
         // check if we need to re-calc the extents, updating dataExtent everytime
@@ -203,14 +183,16 @@
         if (!this.dataExtents || !this._isExtEqual(this.dataExtents, newExts)) {
           this.dataExtents = newExts;
         }
-        // TODO: unit sizes of 1 will not work when we change to a string based scale (ordinal/scaleBand)
-        const xUnitSize = 1;
-        const yUnitSize = 1;
-        // calc cell width and height
-        this._cellWidth = this.x(this.dataExtents.x[0] + xUnitSize);
-        this._cellHeight = this.y(this.dataExtents.y[1] - yUnitSize);
-        // calc rest of data for each cell
-        this.set('_cellData', this._calcCellData(this.chartData));
+        if (this.x && this.y) {
+          // TODO: unit sizes of 1 will not work when we change to a string based scale (ordinal/scaleBand)
+          const xUnitSize = 1;
+          const yUnitSize = 1;
+          // calc cell width and height
+          this._cellWidth = this.x(this.dataExtents.x[0] + xUnitSize);
+          this._cellHeight = this.y(this.dataExtents.y[1] - yUnitSize);
+          // calc rest of data for each cell
+          this.set('_cellData', this._calcCellData(this.chartData));
+        }
       },
 
       /**
