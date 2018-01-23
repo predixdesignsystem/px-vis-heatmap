@@ -50,7 +50,8 @@
           chart-data="[[props.chartData.value]]">
         </px-vis-heatmap>
         <div>
-          <input id="gridsize" placeholder="Grid size" />
+          <input id="xSize" placeholder="X Size" />
+          <input id="ySize" placeholder="Y Size" />
           <button on-click="_generateRandomData">Generate Data</button>
         </div>
       </px-demo-component>
@@ -111,13 +112,13 @@
       width: {
         type: Number,
         inputType: 'number',
-        defaultValue: 500
+        defaultValue: 400
       },
 
       height: {
         type: Number,
         inputType: 'number',
-        defaultValue: 200
+        defaultValue: 400
       },
 
       chartData: {
@@ -175,9 +176,10 @@
 
     _generateRandomData: function() {
       const chart = this.shadowRoot.querySelector('px-vis-heatmap');
-      const gridsize = Number.parseInt(this.$.gridsize.value);
-      if (Number.isInteger(gridsize)) {
-        chart.set('chartData', this._generateData(gridsize, gridsize));
+      const xSize = Number.parseInt(this.$.xSize.value);
+      const ySize = Number.parseInt(this.$.ySize.value);
+      if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
+        chart.set('chartData', this._generateData(xSize, ySize));
       }
     },
 
