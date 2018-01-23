@@ -7,6 +7,8 @@
 <link rel="import" href="../px-vis/px-vis-behavior-common.html">
 <link rel="import" href="../px-vis/px-vis-behavior-chart.html">
 
+<link rel="import" href="px-vis-heatmap-cell.html">
+
 
 <dom-module id="px-vis-heatmap">
   <template>
@@ -60,7 +62,20 @@
       muted-series=[[mutedSeries]]
       domain-changed="[[domainChanged]]">
     </px-vis-axis>
-
+    <!-- heatmap cells -->
+    <template is="dom-repeat" items="[[_cellData]]">
+      <px-vis-heatmap-cell
+        data="[[item]]"
+        width="[[_cellWidth]]"
+        height="[[_cellHeight]]"
+        fill-color="[[item.fillColor]]"
+        stroke-color="[[item.strokeColor]]"
+        svg="[[svg]]"
+        x="[[x]]"
+        y="[[y]]"
+        domain-changed="[[domainChanged]]">
+      </px-vis-heatmap-cell>
+    </template>
   </template>
   <script>
     Polymer({
@@ -73,6 +88,7 @@
         PxColorsBehavior.getSeriesColors,
         PxVisBehavior.axisTypes,
         PxVisBehavior.baseSize,
+        PxVisBehavior.chartExtents,
         PxVisBehavior.completeSeriesConfig,
         PxVisBehavior.dataset,
         PxVisBehavior.dataExtents,
@@ -127,6 +143,20 @@
           }
         },
 
+        _cellData: {
+          type: Array
+        },
+
+        _cellWidth: {
+          type: Number,
+          value: 1
+        },
+
+        _cellHeight: {
+          type: Number,
+          value: 1
+        },
+
         _colorsAreSet: {
           type: Boolean,
           value: false
@@ -135,6 +165,7 @@
       },
 
       observers: [
+        '_updateCellData(chartData, chartData.*, domainChanged)',
         '_updateSeriesConfig(_colorsAreSet)'
       ],
 
@@ -142,24 +173,103 @@
         'px-data-vis-colors-applied': '_colorsSet'
       },
 
-      ready: function() {
-        window.chart = this;
-        this.set('chartData', this._getDemoData(5, 5));
+      _updateCellData: function() {
+        if (!this.chartData) {
+          return;
+        }
+        // check if we need to re-calc the extents, updating dataExtent everytime
+        // will cause a loop as it causes the domainChanged event to fire each time
+        const newExts = this._calcExtents(this.chartData);
+        if (!this.dataExtents || !this._isExtEqual(this.dataExtents, newExts)) {
+          this.dataExtents = newExts;
+        }
+        if (this.x && this.y) {
+          // TODO: unit sizes of 1 will not work when we change to a string based scale (ordinal/scaleBand)
+          const xUnitSize = 1;
+          const yUnitSize = 1;
+          // calc cell width and height
+          this._cellWidth = this.x(this.dataExtents.x[0] + xUnitSize);
+          this._cellHeight = this.y(this.dataExtents.y[1] - yUnitSize);
+          // calc rest of data for each cell
+          this.set('_cellData', this._calcCellData(this.chartData));
+        }
       },
 
-      // TODO: remove
-      _getDemoData: function(xNum, yNum) {
-        const data = [];
-        for (let x = 0; x < xNum; x++) {
-          for (let y = 0; y < yNum; y++) {
-            data.push({
-              x: x,
-              y: y,
-              value: Math.random() * 100
-            });
-          }
+      /**
+       * Calculate the min/max for both x and y axis based on the
+       * values found in the chart data.
+       */
+      _calcExtents: function(chartData) {
+        const exts = {
+          x: [Infinity, -Infinity],
+          y: [Infinity, -Infinity]
+        };
+        chartData.forEach((data) => {
+          exts.x[0] = Math.min(data.x, exts.x[0]);
+          exts.x[1] = Math.max(data.x, exts.x[1]);
+          exts.y[0] = Math.min(data.y, exts.y[0]);
+          exts.y[1] = Math.max(data.y, exts.y[1]);
+        });
+        // add 1 to both max values because we need an addition unit to draw cell
+        exts.x[1]++;
+        exts.y[1]++;
+        return exts;
+        // TODO: change to this impl once string based axis types are impl (oridinal/scaleBand)
+        // impl for string based axis
+        // const exts = {
+        //   x: [],
+        //   y: []
+        // };
+        // chartData.forEach((data) => {
+        //   if (exts.x.indexOf(data.x) < 0) {
+        //     exts.x.push(data.x);
+        //   }
+        //   if (exts.y.indexOf(data.y) < 0) {
+        //     exts.y.push(data.y);
+        //   }
+        // });
+        // return exts;
+      },
+
+      /**
+       * Compares two extents objects and returns true if they are
+       * equal.
+       */
+      _isExtEqual: function(extA, extB) {
+        if (!extA && extB || extA && !extB) {
+          return false;
         }
-        return data;
+        if (!extA && !extB) {
+          return true;
+        }
+        return extA.x[0] === extB.x[0]
+            && extA.x[1] === extB.x[1]
+            && extA.y[0] === extB.y[0]
+            && extA.y[1] === extB.y[1];
+      },
+
+      /**
+       * Use chartData to generate an array of cell data objects.
+       * Each object represents a cell in the heatmap.  The x and y
+       * values are svg coord locations.
+       */
+      _calcCellData: function(chartData) {
+        const cellData = [];
+        chartData.forEach((data) => {
+          cellData.push({
+            // x,y represent top left corner of rectangle
+            x: this.x(data.x),
+            y: this.y(data.y + 1),
+            fillColor: this._calcCellColor(data.value),
+            strokeColor: '#FFF'
+          });
+        });
+        return cellData;
+      },
+
+      _calcCellColor: function(value) {
+        // TODO: impl value to color
+        return '#' + ((1 << 24) * Math.random() | 0).toString(16);
       },
 
       _updateSeriesConfig: function() {

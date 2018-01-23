@@ -48,8 +48,14 @@
       <!-- Component ---------------------------------------------------------->
       <px-demo-component slot="px-demo-component" class="flex" style="width:100%;">
         <px-vis-heatmap
-          test-prop="[[props.testProp.value]]">
+          width="[[props.width.value]]"
+          height="[[props.height.value]]"
+          chart-data="[[props.chartData.value]]">
         </px-vis-heatmap>
+        <div>
+          <input id="gridsize" placeholder="Grid size" />
+          <button on-click="_generateRandomData">Generate Data</button>
+        </div>
       </px-demo-component>
       <!-- END Component ------------------------------------------------------>
 
@@ -75,6 +81,11 @@
 <script>
   Polymer({
     is: 'px-vis-heatmap-demo',
+
+    ready: function() {
+      // TODO: remove - using for easier dev
+      window.chart = this.shadowRoot.querySelector('px-vis-heatmap');
+    },
 
     properties: {
 
@@ -217,12 +228,93 @@
      * A reference for `this.props`. Read the documentation there.
      */
     demoProps: {
-      testProp: {
-        type: String,
-        defaultValue: 'Gandolf',
-        inputType: 'text'
+      width: {
+        type: Number,
+        inputType: 'number',
+        defaultValue: 500
+      },
+
+      height: {
+        type: Number,
+        inputType: 'number',
+        defaultValue: 200
+      },
+
+      chartData: {
+        type: Array,
+        inputType: 'code:JSON',
+        defaultValue: [
+          {
+            x: 0,
+            y: 0,
+            value: 50
+          },
+          {
+            x: 0,
+            y: 1,
+            value: 50
+          },
+          {
+            x: 0,
+            y: 2,
+            value: 50
+          },
+          {
+            x: 1,
+            y: 0,
+            value: 50
+          },
+          {
+            x: 1,
+            y: 1,
+            value: 50
+          },
+          {
+            x: 1,
+            y: 2,
+            value: 50
+          },
+          {
+            x: 2,
+            y: 0,
+            value: 50
+          },
+          {
+            x: 2,
+            y: 1,
+            value: 50
+          },
+          {
+            x: 2,
+            y: 2,
+            value: 50
+          },
+        ]
       }
-    }
+    },
+
+    _generateRandomData: function() {
+      const chart = this.shadowRoot.querySelector('px-vis-heatmap');
+      const gridsize = Number.parseInt(this.$.gridsize.value);
+      if (Number.isInteger(gridsize)) {
+        chart.set('chartData', this._generateData(gridsize, gridsize));
+      }
+    },
+
+    _generateData: function(xNum, yNum) {
+      const data = [];
+      for (let x = 0; x < xNum; x++) {
+        for (let y = 0; y < yNum; y++) {
+          data.push({
+            x: x,
+            y: y,
+            value: Math.random() * 100
+          });
+        }
+      }
+      return data;
+    },
+
   });
 
 </script>

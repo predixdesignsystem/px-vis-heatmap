@@ -1,0 +1,158 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../px-vis/px-vis-behavior-common.html">
+<link rel="import" href="../px-vis/px-vis-behavior-d3.html">
+<link rel="import" href="../px-vis/px-vis-scale.html">
+<link rel="import" href="../px-vis/px-vis-svg.html">
+
+
+<dom-module id="px-vis-heatmap-cell">
+  <script>
+    Polymer({
+
+      is: 'px-vis-heatmap-cell',
+
+      behaviors: [
+        PxVisBehavior.commonMethods,
+        PxVisBehavior.svgDefinition,
+        PxVisBehaviorD3.axes,
+        PxVisBehaviorD3.domainUpdate
+      ],
+
+      properties: {
+
+        /**
+         * Data used to draw the cell.
+         */
+        data: {
+          type: Object,
+          value: {}
+        },
+
+        /**
+         * Width of the cell.
+         */
+        width: {
+          type: Number,
+          value: 1
+        },
+
+        /**
+         * Height of cell.
+         */
+        height: {
+          type: Number,
+          value: 1
+        },
+
+        /**
+         * Fill color.
+         */
+        fillColor: {
+          type: String,
+          value: '#000'
+        },
+
+        /**
+         * Stroke color.
+         */
+        strokeColor: {
+          type: String,
+          value: '#FFF'
+        },
+
+        /**
+         * A delay time used for drawing/updating the cell.
+         * This helps ensure the draw function is not called too
+         * many times when not needed.
+         */
+        drawDebounceTime: {
+          type: Number,
+          value: 50
+        },
+
+        _svgGroup: {
+          type: Object,
+          value: {}
+        }
+
+      },
+
+      observers: [
+        '_draw(data, svg, x, y, domainChanged)',
+        '_updateColors(fillColor, strokeColor)'
+      ],
+
+      detached: function() {
+        // remove our data from svg
+        if (this._svgGroup) {
+          this._svgGroup.remove();
+        }
+      },
+
+      /**
+       * Draw or update the cell.
+       */
+      _draw: function() {
+        this.debounce('drawDebounce', function() {
+          this._drawDebounced();
+        }, this.drawDebounceTime);
+      },
+
+      /**
+       * Draw but delay by debounce time.
+       */
+      _drawDebounced: function() {
+        // remove previous drawing
+        if (!this._isObjEmpty(this._svgGroup)) {
+          this._svgGroup.remove();
+        }
+        // if data is empty, leave drawing empty
+        if (!this.data) {
+          console.warn('Cannot draw without data');
+          return;
+        }
+        if (this._hasNegataiveValue(this.data)) {
+          console.warn('Cannot draw with negative svg coordinates');
+          return;
+        }
+        if (!this.x || !this.y) {
+          console.warn('Cannot draw without valid x and y functions');
+          return;
+        }
+        // create svg group and append rectangle to represent our cell
+        this._svgGroup = this.svg.append('g');
+        this._appendRectangle(this._svgGroup, this.data.x, this.data.y,
+          this.width, this.height, this.strokeColor, this.fillColor);
+      },
+
+      _hasNegataiveValue: function(obj) {
+        for (const i in obj) {
+          if (obj[i] < 0) {
+            return true;
+          }
+        }
+        return false;
+      },
+
+      _updateColors() {
+        // TODO: change color without re-drawing entirely
+        this._draw();
+      },
+
+      /**
+       * Draw rectangle to existing svg element. Coordinates passed in by 'data.x' and 'data.y'
+       * should define the upper left point of the rectangle.
+       */
+      _appendRectangle: function(svg, x, y, width, height, strokeColor, fillColor) {
+        svg.append('rect')
+          .attr('x', x)
+          .attr('y', y)
+          .attr('width', width)
+          .attr('height', height)
+          .attr('stroke', strokeColor)
+          .attr('fill', fillColor);
+      },
+
+    });
+  </script>
+</dom-module>
