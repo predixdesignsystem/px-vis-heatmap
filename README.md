@@ -1,4 +1,4 @@
-# px-vis-heatmap
+# px-vis-heatmap [![Build Status](https://travis-ci.org/vaadin/px-vis-heatmap.svg?branch=master)](https://travis-ci.org/vaadin/px-vis-heatmap)
 
 ## Overview
 
