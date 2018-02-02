@@ -29,22 +29,6 @@
         },
 
         /**
-         * Width of the cell.
-         */
-        width: {
-          type: Number,
-          value: 1
-        },
-
-        /**
-         * Height of cell.
-         */
-        height: {
-          type: Number,
-          value: 1
-        },
-
-        /**
          * Fill color.
          */
         fillColor: {
@@ -121,8 +105,15 @@
         }
         // create svg group and append rectangle to represent our cell
         this._svgGroup = this.svg.append('g');
-        this._appendRectangle(this._svgGroup, this.data.x, this.data.y,
-          this.width, this.height, this.strokeColor, this.fillColor);
+        // convert chart values to svg points
+        const svgData = {
+          x: this.x(this.data.x),
+          y: this.y(this.data.y),
+          width: this.x.bandwidth(),
+          height: this.y.bandwidth()
+        };
+        this._appendRectangle(this._svgGroup, svgData.x, svgData.y,
+          svgData.width, svgData.height, this.strokeColor, this.fillColor);
       },
 
       _hasNegataiveValue: function(obj) {
@@ -151,7 +142,7 @@
           .attr('height', height)
           .attr('stroke', strokeColor)
           .attr('fill', fillColor);
-      },
+      }
 
     });
   </script>
