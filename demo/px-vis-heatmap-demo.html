@@ -47,7 +47,8 @@
         <px-vis-heatmap
           width="[[props.width.value]]"
           height="[[props.height.value]]"
-          chart-data="[[props.chartData.value]]">
+          chart-data="[[props.chartData.value]]"
+          scale-padding="[[props.scalePadding.value]]">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
@@ -171,6 +172,12 @@
             value: 50
           },
         ]
+      },
+
+      scalePadding: {
+        type: Number,
+        inputType: 'number',
+        defaultValue: 0
       }
     },
 
