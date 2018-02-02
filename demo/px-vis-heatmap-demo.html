@@ -48,7 +48,8 @@
           width="[[props.width.value]]"
           height="[[props.height.value]]"
           chart-data="[[props.chartData.value]]"
-          scale-padding="[[props.scalePadding.value]]">
+          scale-padding="[[props.scalePadding.value]]"
+          padding-outer="[[props.paddingOuter.value]]">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
@@ -175,6 +176,12 @@
       },
 
       scalePadding: {
+        type: Number,
+        inputType: 'number',
+        defaultValue: 0
+      },
+
+      paddingOuter: {
         type: Number,
         inputType: 'number',
         defaultValue: 0

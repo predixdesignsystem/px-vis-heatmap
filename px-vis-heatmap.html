@@ -19,6 +19,7 @@
       svg="{{svg}}">
     </px-vis-svg>
     <px-vis-scale
+      id="scale"
       x-axis-type="[[xAxisType]]"
       y-axis-type="[[yAxisType]]"
       complete-series-config="[[completeSeriesConfig]]"
@@ -156,6 +157,14 @@
           value: 0
         },
 
+        /**
+         * Padding between boxes and axis.
+         */
+        paddingOuter: {
+          type: Number,
+          value: 0
+        },
+
         _cellData: {
           type: Array
         },
@@ -168,7 +177,7 @@
       },
 
       observers: [
-        '_updateDataExtents(chartData, chartData.*)',
+        '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateCellData(chartData, chartData.*, domainChanged)',
         '_updateSeriesConfig(_colorsAreSet)'
       ],
@@ -191,7 +200,14 @@
       },
 
       _updateDataExtents: function() {
+        if (!this.chartData || !this.x || !this.y) {
+          return;
+        }
         this.dataExtents = this._calcExtents(this.chartData);
+        if (this.x && this.y) {
+          this.x.paddingOuter(this.paddingOuter);
+          this.y.paddingOuter(this.paddingOuter);
+        }
       },
 
       /**
