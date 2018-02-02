@@ -19,6 +19,7 @@
       svg="{{svg}}">
     </px-vis-svg>
     <px-vis-scale
+      id="scale"
       x-axis-type="[[xAxisType]]"
       y-axis-type="[[yAxisType]]"
       complete-series-config="[[completeSeriesConfig]]"
@@ -30,19 +31,22 @@
       chart-data="[[chartData]]"
       x="{{x}}"
       y="{{y}}"
+      scale-padding="[[scalePadding]]"
       domain-changed="{{domainChanged}}">
     </px-vis-scale>
     <!-- y axis -->
     <px-vis-axis
       id="yAxis"
-      svg="[[svg]]"
+      svg="[[layer.1]]"
       axis="[[y]]"
+      axis-type="[[yAxisType]]"
       margin="[[margin]]"
       width="[[width]]"
       height="[[height]]"
       title="Y Axis"
       orientation="left"
       label-position="center"
+      prevent-series-bar
       complete-series-config="[[completeSeriesConfig]]"
       muted-series=[[mutedSeries]]
       domain-changed="[[domainChanged]]">
@@ -50,14 +54,16 @@
     <!-- x axis -->
     <px-vis-axis
       id="xAxis"
-      svg="[[svg]]"
+      svg="[[layer.1]]"
       axis="[[x]]"
+      axis-type="[[xAxisType]]"
       margin="[[margin]]"
       width="[[width]]"
       height="[[height]]"
       title="X Axis"
       orientation="bottom"
       label-position="center"
+      prevent-series-bar
       complete-series-config="[[completeSeriesConfig]]"
       muted-series=[[mutedSeries]]
       domain-changed="[[domainChanged]]">
@@ -66,8 +72,6 @@
     <template is="dom-repeat" items="[[_cellData]]">
       <px-vis-heatmap-cell
         data="[[item]]"
-        width="[[_cellWidth]]"
-        height="[[_cellHeight]]"
         fill-color="[[item.fillColor]]"
         stroke-color="[[item.strokeColor]]"
         svg="[[svg]]"
@@ -94,8 +98,10 @@
         PxVisBehavior.dataExtents,
         PxVisBehavior.margins,
         PxVisBehavior.observerCheck,
+        PxVisBehavior.updateStylesOverride,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
+        PxVisBehaviorChart.layers,
         PxVisBehaviorChart.subConfiguration
       ],
 
@@ -143,18 +149,24 @@
           }
         },
 
+        /**
+         * Padding between boxes.
+         */
+        scalePadding: {
+          type: Number,
+          value: 0
+        },
+
+        /**
+         * Padding between boxes and axis.
+         */
+        paddingOuter: {
+          type: Number,
+          value: 0
+        },
+
         _cellData: {
           type: Array
-        },
-
-        _cellWidth: {
-          type: Number,
-          value: 1
-        },
-
-        _cellHeight: {
-          type: Number,
-          value: 1
         },
 
         _colorsAreSet: {
@@ -165,6 +177,7 @@
       },
 
       observers: [
+        '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateCellData(chartData, chartData.*, domainChanged)',
         '_updateSeriesConfig(_colorsAreSet)'
       ],
@@ -173,25 +186,27 @@
         'px-data-vis-colors-applied': '_colorsSet'
       },
 
+      ready: function() {
+        this.set('numberOfLayers', 5);
+        this.xAxisType = 'scaleBand';
+        this.yAxisType = 'scaleBand';
+      },
+
       _updateCellData: function() {
-        if (!this.chartData) {
+        if (!this.chartData || !this.x || !this.y) {
           return;
         }
-        // check if we need to re-calc the extents, updating dataExtent everytime
-        // will cause a loop as it causes the domainChanged event to fire each time
-        const newExts = this._calcExtents(this.chartData);
-        if (!this.dataExtents || !this._isExtEqual(this.dataExtents, newExts)) {
-          this.dataExtents = newExts;
+        this.set('_cellData', this._calcCellData(this.chartData));
+      },
+
+      _updateDataExtents: function() {
+        if (!this.chartData || !this.x || !this.y) {
+          return;
         }
+        this.dataExtents = this._calcExtents(this.chartData);
         if (this.x && this.y) {
-          // TODO: unit sizes of 1 will not work when we change to a string based scale (ordinal/scaleBand)
-          const xUnitSize = 1;
-          const yUnitSize = 1;
-          // calc cell width and height
-          this._cellWidth = this.x(this.dataExtents.x[0] + xUnitSize);
-          this._cellHeight = this.y(this.dataExtents.y[1] - yUnitSize);
-          // calc rest of data for each cell
-          this.set('_cellData', this._calcCellData(this.chartData));
+          this.x.paddingOuter(this.paddingOuter);
+          this.y.paddingOuter(this.paddingOuter);
         }
       },
 
@@ -201,34 +216,18 @@
        */
       _calcExtents: function(chartData) {
         const exts = {
-          x: [Infinity, -Infinity],
-          y: [Infinity, -Infinity]
+          x: [],
+          y: []
         };
         chartData.forEach((data) => {
-          exts.x[0] = Math.min(data.x, exts.x[0]);
-          exts.x[1] = Math.max(data.x, exts.x[1]);
-          exts.y[0] = Math.min(data.y, exts.y[0]);
-          exts.y[1] = Math.max(data.y, exts.y[1]);
+          if (exts.x.indexOf(data.x) < 0) {
+            exts.x.push(data.x);
+          }
+          if (exts.y.indexOf(data.y) < 0) {
+            exts.y.push(data.y);
+          }
         });
-        // add 1 to both max values because we need an addition unit to draw cell
-        exts.x[1]++;
-        exts.y[1]++;
         return exts;
-        // TODO: change to this impl once string based axis types are impl (oridinal/scaleBand)
-        // impl for string based axis
-        // const exts = {
-        //   x: [],
-        //   y: []
-        // };
-        // chartData.forEach((data) => {
-        //   if (exts.x.indexOf(data.x) < 0) {
-        //     exts.x.push(data.x);
-        //   }
-        //   if (exts.y.indexOf(data.y) < 0) {
-        //     exts.y.push(data.y);
-        //   }
-        // });
-        // return exts;
       },
 
       /**
@@ -257,9 +256,8 @@
         const cellData = [];
         chartData.forEach((data) => {
           cellData.push({
-            // x,y represent top left corner of rectangle
-            x: this.x(data.x),
-            y: this.y(data.y + 1),
+            x: data.x,
+            y: data.y,
             fillColor: this._calcCellColor(data.value),
             strokeColor: '#FFF'
           });
