@@ -72,6 +72,7 @@
     <template is="dom-repeat" items="[[_cellData]]">
       <px-vis-heatmap-cell
         data="[[item]]"
+        show-cell-value="[[showCellValue]]"
         fill-color="[[item.fillColor]]"
         stroke-color="[[item.strokeColor]]"
         svg="[[svg]]"
@@ -163,6 +164,14 @@
         paddingOuter: {
           type: Number,
           value: 0
+        },
+
+        /**
+         * Show the point value inside each cell.
+         */
+        showCellValue: {
+          type: Boolean,
+          value: false
         },
 
         _cellData: {
@@ -258,6 +267,7 @@
           cellData.push({
             x: data.x,
             y: data.y,
+            value: data.value,
             fillColor: this._calcCellColor(data.value),
             strokeColor: '#FFF'
           });

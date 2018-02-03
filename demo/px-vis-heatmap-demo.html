@@ -47,9 +47,11 @@
         <px-vis-heatmap
           width="[[props.width.value]]"
           height="[[props.height.value]]"
+          margin="[[props.margin.value]]"
           chart-data="[[props.chartData.value]]"
           scale-padding="[[props.scalePadding.value]]"
-          padding-outer="[[props.paddingOuter.value]]">
+          padding-outer="[[props.paddingOuter.value]]"
+          show-cell-value="[[props.showCellValue.value]]">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
@@ -123,53 +125,63 @@
         defaultValue: 400
       },
 
+      margin: {
+        type: Object,
+        defaultValue: {
+          'top': 10,
+          'right': 10,
+          'bottom': 70,
+          'left': 70
+        }
+      },
+
       chartData: {
         type: Array,
         inputType: 'code:JSON',
         defaultValue: [
           {
-            x: 0,
-            y: 0,
+            x: 'Cat A',
+            y: 'Cat 1',
             value: 50
           },
           {
-            x: 0,
-            y: 1,
+            x: 'Cat A',
+            y: 'Cat 2',
             value: 50
           },
           {
-            x: 0,
-            y: 2,
+            x: 'Cat A',
+            y: 'Cat 3',
             value: 50
           },
           {
-            x: 1,
-            y: 0,
+            x: 'Cat B',
+            y: 'Cat 1',
             value: 50
           },
           {
-            x: 1,
-            y: 1,
+            x: 'Cat B',
+            y: 'Cat 2',
             value: 50
           },
           {
-            x: 1,
-            y: 2,
+            x: 'Cat B',
+            y: 'Cat 3',
             value: 50
           },
           {
-            x: 2,
-            y: 0,
+            x: 'Cat C',
+            y: 'Cat 1',
             value: 50
           },
           {
-            x: 2,
-            y: 1,
+            x: 'Cat C',
+            y: 'Cat 2',
             value: 50
           },
           {
-            x: 2,
-            y: 2,
+            x: 'Cat C',
+            y: 'Cat 3',
             value: 50
           },
         ]
@@ -185,6 +197,12 @@
         type: Number,
         inputType: 'number',
         defaultValue: 0
+      },
+
+      showCellValue: {
+        type: Boolean,
+        inputType: 'toggle',
+        defaultValue: true
       }
     },
 

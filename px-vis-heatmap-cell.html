@@ -29,7 +29,15 @@
         },
 
         /**
-         * Fill color.
+         * True will render the data value in the cell.
+         */
+        showCellValue: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * Fill color of cell.
          */
         fillColor: {
           type: String,
@@ -37,11 +45,44 @@
         },
 
         /**
-         * Stroke color.
+         * Stroke color of cell.
          */
         strokeColor: {
           type: String,
           value: '#FFF'
+        },
+
+        /**
+         * Text alignment for the cell value text. Choice:
+         * 'start'
+         * 'middle'
+         * 'end'
+         */
+        textAlign: {
+          type: String,
+          value: 'middle'
+        },
+
+        /**
+         * Color of text inside cell.
+         */
+        textColor: {
+          type: String,
+          value: '#000'
+        },
+
+        /**
+         * Size of text inside cell.
+         */
+        fontSize: {
+          type: String
+        },
+
+        /**
+         * Font family of text inside cell.
+         */
+        fontFamily: {
+          type: String
         },
 
         /**
@@ -62,7 +103,7 @@
       },
 
       observers: [
-        '_draw(data, svg, x, y, domainChanged)',
+        '_draw(data, showCellValue, svg, x, y, domainChanged)',
         '_updateColors(fillColor, strokeColor)'
       ],
 
@@ -95,10 +136,6 @@
           console.warn('Cannot draw without data');
           return;
         }
-        if (this._hasNegataiveValue(this.data)) {
-          console.warn('Cannot draw with negative svg coordinates');
-          return;
-        }
         if (!this.x || !this.y) {
           console.warn('Cannot draw without valid x and y functions');
           return;
@@ -112,17 +149,32 @@
           width: this.x.bandwidth(),
           height: this.y.bandwidth()
         };
+
+        if (!this._isValidSvgPoints(svgData)) {
+          console.warn('Skipping draw, invalid svg points');
+          return;
+        }
+
         this._appendRectangle(this._svgGroup, svgData.x, svgData.y,
           svgData.width, svgData.height, this.strokeColor, this.fillColor);
+        // write value
+        if (this.showCellValue) {
+          const textPos = {
+            x: svgData.x + svgData.width / 2,
+            y: svgData.y + svgData.height / 2
+          };
+          this._appendText(this._svgGroup, textPos.x, textPos.y,
+            this.data.value, this.textColor, this.textAlign, this.fontFamily, this.fontSize);
+        }
       },
 
-      _hasNegataiveValue: function(obj) {
+      _isValidSvgPoints: function(obj) {
         for (const i in obj) {
-          if (obj[i] < 0) {
-            return true;
+          if (isNaN(obj[i]) || obj[i] < 0) {
+            return false;
           }
         }
-        return false;
+        return true;
       },
 
       _updateColors() {
@@ -142,6 +194,25 @@
           .attr('height', height)
           .attr('stroke', strokeColor)
           .attr('fill', fillColor);
+      },
+
+      _appendText: function(svg, x, y, text, color, textAnchor, fontFamily, fontSize) {
+        const textEl = svg.append('text')
+          .text(text)
+          .attr('x', x)
+          .attr('y', y);
+        if (color) {
+          textEl.attr('fill', color);
+        }
+        if (textAnchor) {
+          textEl.attr('text-anchor', textAnchor);
+        }
+        if (fontFamily) {
+          textEl.attr('font-family', fontFamily);
+        }
+        if (fontSize) {
+          textEl.attr('font-size', fontSize);
+        }
       }
 
     });
