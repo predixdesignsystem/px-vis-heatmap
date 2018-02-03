@@ -50,7 +50,8 @@
           margin="[[props.margin.value]]"
           chart-data="[[props.chartData.value]]"
           scale-padding="[[props.scalePadding.value]]"
-          padding-outer="[[props.paddingOuter.value]]">
+          padding-outer="[[props.paddingOuter.value]]"
+          show-cell-value="[[props.showCellValue.value]]">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
@@ -196,6 +197,12 @@
         type: Number,
         inputType: 'number',
         defaultValue: 0
+      },
+
+      showCellValue: {
+        type: Boolean,
+        inputType: 'toggle',
+        defaultValue: true
       }
     },
 
