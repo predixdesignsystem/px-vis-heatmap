@@ -69,12 +69,10 @@
       domain-changed="[[domainChanged]]">
     </px-vis-axis>
     <!-- heatmap cells -->
-    <template is="dom-repeat" items="[[_cellData]]">
+    <template is="dom-repeat" items="[[chartData]]">
       <px-vis-heatmap-cell
         data="[[item]]"
         show-cell-value="[[showCellValue]]"
-        fill-color="[[item.fillColor]]"
-        stroke-color="[[item.strokeColor]]"
         svg="[[svg]]"
         x="[[x]]"
         y="[[y]]"
@@ -187,7 +185,7 @@
 
       observers: [
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
-        '_updateCellData(chartData, chartData.*, domainChanged)',
+        '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)'
       ],
 
@@ -199,13 +197,6 @@
         this.set('numberOfLayers', 5);
         this.xAxisType = 'scaleBand';
         this.yAxisType = 'scaleBand';
-      },
-
-      _updateCellData: function() {
-        if (!this.chartData || !this.x || !this.y) {
-          return;
-        }
-        this.set('_cellData', this._calcCellData(this.chartData));
       },
 
       _updateDataExtents: function() {
@@ -256,42 +247,16 @@
             && extA.y[1] === extB.y[1];
       },
 
-      /**
-       * Use chartData to generate an array of cell data objects.
-       * Each object represents a cell in the heatmap.  The x and y
-       * values are svg coord locations.
-       */
-      _calcCellData: function(chartData) {
-        const cellData = [];
-        chartData.forEach((data) => {
-          cellData.push({
-            x: data.x,
-            y: data.y,
-            value: data.value,
-            fillColor: this._calcCellColor(data.value),
-            strokeColor: '#FFF'
-          });
-        });
-        return cellData;
-      },
-
-      _calcCellColor: function(value) {
-        // TODO: impl value to color
-        return '#' + ((1 << 24) * Math.random() | 0).toString(16);
-      },
-
       _updateSeriesConfig: function() {
         this.debounce('_updateSeriesConfig', function() {
-          if (this._colorsAreSet) {
-            this.set('completeSeriesConfig', {
-              'mySeries': {
-                'name': 'My-Series',
-                'x': 'x',
-                'y': 'y',
-                'color': this._getColor(0)
-              }
-            });
-          }
+          // if app doesn't supply seriesConfig, use our default
+          const seriesConfig = this.seriesConfig || {
+            name: 'Series',
+            x: 'x',
+            y: 'y',
+            value: 'value'
+          };
+          this.set('completeSeriesConfig', seriesConfig);
         }, 10);
       },
 
