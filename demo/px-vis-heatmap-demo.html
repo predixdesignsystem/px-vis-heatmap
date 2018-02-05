@@ -49,6 +49,7 @@
           height="[[props.height.value]]"
           margin="[[props.margin.value]]"
           chart-data="[[props.chartData.value]]"
+          series-config="[[props.seriesConfig.value]]"
           scale-padding="[[props.scalePadding.value]]"
           padding-outer="[[props.paddingOuter.value]]"
           show-cell-value="[[props.showCellValue.value]]">
@@ -185,6 +186,19 @@
             value: 50
           },
         ]
+      },
+
+      seriesConfig: {
+        type: Object,
+        inputType: 'code:JSON',
+        defaultValue: {
+          'series1': {
+            'name': 'Series 1',
+            'x': 'x',
+            'y': 'y',
+            'value': 'value'
+          }
+        }
       },
 
       scalePadding: {

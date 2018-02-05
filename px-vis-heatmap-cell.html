@@ -13,6 +13,7 @@
 
       behaviors: [
         PxVisBehavior.commonMethods,
+        PxVisBehavior.completeSeriesConfig,
         PxVisBehavior.svgDefinition,
         PxVisBehaviorD3.axes,
         PxVisBehaviorD3.domainUpdate
@@ -28,6 +29,10 @@
           value: {}
         },
 
+        seriesKey: {
+          type: String
+        },
+
         /**
          * True will render the data value in the cell.
          */
@@ -37,19 +42,18 @@
         },
 
         /**
-         * Fill color of cell.
+         * Fill color of cell. If set, this color will override the default color
+         * which is calculated by the cell value and the color scale.
          */
         fillColor: {
-          type: String,
-          value: '#000'
+          type: String
         },
 
         /**
          * Stroke color of cell.
          */
         strokeColor: {
-          type: String,
-          value: '#FFF'
+          type: String
         },
 
         /**
@@ -103,7 +107,7 @@
       },
 
       observers: [
-        '_draw(data, showCellValue, svg, x, y, domainChanged)',
+        '_draw(data, showCellValue, svg, x, y, domainChanged, completeSeriesConfig, seriesKey)',
         '_updateColors(fillColor, strokeColor)'
       ],
 
@@ -118,6 +122,9 @@
        * Draw or update the cell.
        */
       _draw: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
         this.debounce('drawDebounce', function() {
           this._drawDebounced();
         }, this.drawDebounceTime);
@@ -144,8 +151,8 @@
         this._svgGroup = this.svg.append('g');
         // convert chart values to svg points
         const svgData = {
-          x: this.x(this.data.x),
-          y: this.y(this.data.y),
+          x: this.x(this._getValue('x')),
+          y: this.y(this._getValue('y')),
           width: this.x.bandwidth(),
           height: this.y.bandwidth()
         };
@@ -155,8 +162,11 @@
           return;
         }
 
+        // calc colors
+        const fillColor = this.fillColor || this._calcCellColor();
+
         this._appendRectangle(this._svgGroup, svgData.x, svgData.y,
-          svgData.width, svgData.height, this.strokeColor, this.fillColor);
+          svgData.width, svgData.height, this.strokeColor, fillColor);
         // write value
         if (this.showCellValue) {
           const textPos = {
@@ -164,8 +174,15 @@
             y: svgData.y + svgData.height / 2
           };
           this._appendText(this._svgGroup, textPos.x, textPos.y,
-            this.data.value, this.textColor, this.textAlign, this.fontFamily, this.fontSize);
+            this._getValue('value'), this.textColor, this.textAlign, this.fontFamily, this.fontSize);
         }
+      },
+
+      /**
+       * Gets value from this.data object using keys in the completeSeriesConfig.
+       */
+      _getValue: function(key) {
+        return this.data[this.completeSeriesConfig[this.seriesKey][key]];
       },
 
       _isValidSvgPoints: function(obj) {
@@ -213,7 +230,12 @@
         if (fontSize) {
           textEl.attr('font-size', fontSize);
         }
-      }
+      },
+
+      _calcCellColor: function(value) {
+        // TODO: impl value to color
+        return '#' + ((1 << 24) * Math.random() | 0).toString(16);
+      },
 
     });
   </script>
