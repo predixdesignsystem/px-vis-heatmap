@@ -196,6 +196,8 @@
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
+        '_xAxisConfigChanged(xAxisConfig)',
+        '_yAxisConfigChanged(yAxisConfig)',
         '_updateSeriesKey(seriesKey)'
       ],
 
@@ -280,6 +282,20 @@
         }
         const cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
         cells.forEach((cell) => cell.seriesKey = this.seriesKey);
+      },
+
+      _xAxisConfigChanged: function(xAxisConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(xAxisConfig, this.$.xAxis);
+      },
+
+      _yAxisConfigChanged: function(yAxisConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(yAxisConfig, this.$.yAxis);
       },
 
       _colorsSet: function() {

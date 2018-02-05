@@ -52,7 +52,9 @@
           series-config="[[props.seriesConfig.value]]"
           scale-padding="[[props.scalePadding.value]]"
           padding-outer="[[props.paddingOuter.value]]"
-          show-cell-value="[[props.showCellValue.value]]">
+          show-cell-value="[[props.showCellValue.value]]"
+          x-axis-config="[[props.xAxisConfig.value]]"
+          y-axis-config="[[props.yAxisConfig.value]]">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
@@ -217,7 +219,28 @@
         type: Boolean,
         inputType: 'toggle',
         defaultValue: true
-      }
+      },
+
+      xAxisConfig: {
+        type: Object,
+        inputType: 'code:JSON',
+        defaultValue: {
+          title: 'X Axis Label',
+          orientation: 'bottom',
+          labelPosition: 'center'
+        }
+      },
+
+      yAxisConfig: {
+        type: Object,
+        inputType: 'code:JSON',
+        defaultValue: {
+          title: 'Y Axis Label',
+          orientation: 'left',
+          labelPosition: 'center'
+        }
+      },
+
     },
 
     _generateRandomData: function() {
