@@ -76,6 +76,8 @@
         svg="[[svg]]"
         x="[[x]]"
         y="[[y]]"
+        series-key="[[seriesKey]]"
+        complete-series-config="[[completeSeriesConfig]]"
         domain-changed="[[domainChanged]]">
       </px-vis-heatmap-cell>
     </template>
@@ -111,6 +113,13 @@
         */
         chartData: {
           type: Array
+        },
+
+        /**
+         * Key that is tied to the seriesConfig.
+         */
+        seriesKey: {
+          type: String
         },
 
         /**
@@ -186,7 +195,8 @@
       observers: [
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
-        '_updateSeriesConfig(_colorsAreSet)'
+        '_updateSeriesConfig(_colorsAreSet)',
+        '_updateSeriesKey(seriesKey)'
       ],
 
       listeners: {
@@ -251,13 +261,25 @@
         this.debounce('_updateSeriesConfig', function() {
           // if app doesn't supply seriesConfig, use our default
           const seriesConfig = this.seriesConfig || {
-            name: 'Series',
-            x: 'x',
-            y: 'y',
-            value: 'value'
+            'series1': {
+              'name': 'Series 1',
+              'x': 'x',
+              'y': 'y',
+              'value': 'value'
+            }
           };
+          // because we only expect a single series, find the first key and assume thats the series key
+          this.set('seriesKey', Object.keys(seriesConfig)[0]);
           this.set('completeSeriesConfig', seriesConfig);
         }, 10);
+      },
+
+      _updateSeriesKey: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        const cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
+        cells.forEach((cell) => cell.seriesKey = this.seriesKey);
       },
 
       _colorsSet: function() {

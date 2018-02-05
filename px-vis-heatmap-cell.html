@@ -13,6 +13,7 @@
 
       behaviors: [
         PxVisBehavior.commonMethods,
+        PxVisBehavior.completeSeriesConfig,
         PxVisBehavior.svgDefinition,
         PxVisBehaviorD3.axes,
         PxVisBehaviorD3.domainUpdate
@@ -26,6 +27,10 @@
         data: {
           type: Object,
           value: {}
+        },
+
+        seriesKey: {
+          type: String
         },
 
         /**
@@ -102,7 +107,7 @@
       },
 
       observers: [
-        '_draw(data, showCellValue, svg, x, y, domainChanged)',
+        '_draw(data, showCellValue, svg, x, y, domainChanged, completeSeriesConfig, seriesKey)',
         '_updateColors(fillColor, strokeColor)'
       ],
 
@@ -117,6 +122,9 @@
        * Draw or update the cell.
        */
       _draw: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
         this.debounce('drawDebounce', function() {
           this._drawDebounced();
         }, this.drawDebounceTime);
@@ -143,8 +151,8 @@
         this._svgGroup = this.svg.append('g');
         // convert chart values to svg points
         const svgData = {
-          x: this.x(this.data.x),
-          y: this.y(this.data.y),
+          x: this.x(this._getValue('x')),
+          y: this.y(this._getValue('y')),
           width: this.x.bandwidth(),
           height: this.y.bandwidth()
         };
@@ -166,8 +174,15 @@
             y: svgData.y + svgData.height / 2
           };
           this._appendText(this._svgGroup, textPos.x, textPos.y,
-            this.data.value, this.textColor, this.textAlign, this.fontFamily, this.fontSize);
+            this._getValue('value'), this.textColor, this.textAlign, this.fontFamily, this.fontSize);
         }
+      },
+
+      /**
+       * Gets value from this.data object using keys in the completeSeriesConfig.
+       */
+      _getValue: function(key) {
+        return this.data[this.completeSeriesConfig[this.seriesKey][key]];
       },
 
       _isValidSvgPoints: function(obj) {
