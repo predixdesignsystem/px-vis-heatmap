@@ -8,6 +8,7 @@
 <link rel="import" href="../px-vis/px-vis-behavior-chart.html">
 
 <link rel="import" href="px-vis-heatmap-cell.html">
+<link rel="import" href="px-vis-heatmap-legend.html">
 
 
 <dom-module id="px-vis-heatmap">
@@ -73,6 +74,7 @@
       <px-vis-heatmap-cell
         data="[[item]]"
         show-cell-value="[[showCellValue]]"
+        color-scale="[[_colorScale]]"
         svg="[[svg]]"
         x="[[x]]"
         y="[[y]]"
@@ -81,6 +83,16 @@
         domain-changed="[[domainChanged]]">
       </px-vis-heatmap-cell>
     </template>
+
+    <px-vis-heatmap-legend
+      id="legend"
+      margin="[[_getLegendMargin()]]"
+      height="[[height]]"
+      color-scale="[[_colorScale]]"
+      complete-series-config="[[completeSeriesConfig]]"
+      domain-changed="[[domainChanged]]">
+    </px-vis-heatmap-legend>
+
   </template>
   <script>
     Polymer({
@@ -181,6 +193,19 @@
           value: false
         },
 
+        /**
+         * Colors to use for the heatmap.
+         */
+        colors: {
+          type: Array,
+          value: function() {
+            return [
+              'lightblue',
+              'blue'
+            ];
+          }
+        },
+
         _cellData: {
           type: Array
         },
@@ -188,6 +213,10 @@
         _colorsAreSet: {
           type: Boolean,
           value: false
+        },
+
+        _colorScale: {
+          type: Function
         }
 
       },
@@ -198,7 +227,8 @@
         '_updateSeriesConfig(_colorsAreSet)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
-        '_updateSeriesKey(seriesKey)'
+        '_updateSeriesKey(seriesKey)',
+        '_updateColorScale(chartData.*, colors, domainChanged)'
       ],
 
       listeners: {
@@ -229,7 +259,8 @@
       _calcExtents: function(chartData) {
         const exts = {
           x: [],
-          y: []
+          y: [],
+          value: [Infinity, -Infinity]
         };
         chartData.forEach((data) => {
           if (exts.x.indexOf(data.x) < 0) {
@@ -238,6 +269,8 @@
           if (exts.y.indexOf(data.y) < 0) {
             exts.y.push(data.y);
           }
+          exts.value[0] = Math.min(exts.value[0], data.value);
+          exts.value[1] = Math.max(exts.value[1], data.value);
         });
         return exts;
       },
@@ -300,6 +333,49 @@
 
       _colorsSet: function() {
         this.set('_colorsAreSet', true);
+      },
+
+      _getLegendMargin: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return {
+            'top': 0,
+            'right': 50,
+            'bottom': 0,
+            'left': 0
+          };
+        }
+        // TODO: compute real height of xAxis
+        const xAxisHeight = 20;
+        return {
+          'top': 10,
+          'right': 50,
+          'bottom': 50 + xAxisHeight,
+          'left': 0
+        };
+      },
+
+      _updateColorScale: function() {
+        if (!this.dataExtents && !this.chartExtents) {
+          return;
+        }
+        if (!this.colors || this.colors.length < 1) {
+          return;
+        }
+        const exts = this.chartExtents || this.dataExtents;
+        if (!exts.value) {
+          return;
+        }
+        // calculate the value threshold for each color
+        const valueThresholds = [];
+        const rangePerColor = (exts.value[1] - exts.value[0]) / (this.colors.length - 1);
+        for (let i = 0; i < this.colors.length; i++) {
+          valueThresholds.push(exts.value[0] + rangePerColor * i);
+        }
+        // in case of rounding limitations, manually set last value to our max
+        valueThresholds[valueThresholds.length - 1] = exts.value[1];
+        this.set('_colorScale', Px.d3.scaleLinear()
+          .domain(valueThresholds)
+          .range(this.colors));
       }
 
     });
