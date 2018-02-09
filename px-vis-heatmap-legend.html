@@ -21,7 +21,7 @@
       x-axis-type="linear"
       y-axis-type="linear"
       complete-series-config="[[completeSeriesConfig]]"
-      chart-data="[[chartData]]"
+      chart-data="[[_emptyChartData]]"
       chart-extents="[[chartExtents]]"
       data-extents="[[dataExtents]]"
       width="[[width]]"
@@ -55,32 +55,19 @@
       is: 'px-vis-heatmap-legend',
 
       behaviors: [
-        PxColorsBehavior.dataVisColors,
-        PxColorsBehavior.dataVisColorTheming,
-        PxColorsBehavior.getSeriesColors,
         PxVisBehavior.axisTypes,
         PxVisBehavior.baseSize,
         PxVisBehavior.chartExtents,
         PxVisBehavior.completeSeriesConfig,
-        PxVisBehavior.dataset,
         PxVisBehavior.dataExtents,
         PxVisBehavior.margins,
         PxVisBehavior.observerCheck,
-        PxVisBehavior.updateStylesOverride,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
-        PxVisBehaviorChart.layers,
         PxVisBehaviorChart.subConfiguration
       ],
 
       properties: {
-
-        /**
-        * Container for the data object that drives the chart.
-        */
-        chartData: {
-          type: Array
-        },
 
         /**
          * Function used to convert chart value to color value.
@@ -132,12 +119,29 @@
               y: [0, 2]
             };
           }
-        }
+        },
+
+        /**
+        * This component doesn't use chartData, but some px-vis
+        * comps require a valid chart data object.
+        */
+        _emptyChartData: {
+          type: Array,
+          value: function() {
+            return [
+              {
+                x: 0,
+                y: 0
+              }
+            ];
+          }
+        },
 
       },
 
       observers: [
-        'drawElement(colorScale, width, height, margin, margin.*, domainChanged)'
+        'drawElement(colorScale, width, height, margin.*, domainChanged)',
+        '_yAxisConfigChanged(yAxisConfig)'
       ],
 
       ready: function() {
@@ -148,14 +152,18 @@
           return;
         }
 
+        // remove old gradient and drawing
         if (this.legend) {
           this.legend.remove();
         }
-
         if (this.rect) {
           this.rect.remove();
         }
 
+        // update axis extents
+        this.dataExtents = this._calcExtents();
+
+        // calculate new gradient
         const valueThresholds = this.colorScale.domain();
         const valueRange = valueThresholds[valueThresholds.length - 1] - valueThresholds[0];
         const colors = this.colorScale.range();
@@ -191,6 +199,25 @@
           .style('fill', 'url(#gradient)')
           // gradient draws top to bottom, so we need to flip it to match the scale which is bottom to top
           .attr('transform', 'rotate(180, ' + (width / 2) + ', ' + (height / 2) + ')');
+      },
+
+      _calcExtents: function() {
+        const exts = {
+          x: [0, 1],
+          y: [0, 1]
+        };
+        if (this.colorScale) {
+          const values = this.colorScale.domain();
+          exts.y = [values[0], values[values.length - 1]];
+        }
+        return exts;
+      },
+
+      _yAxisConfigChanged: function(yAxisConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(yAxisConfig, this.$.yAxis);
       }
 
     });
