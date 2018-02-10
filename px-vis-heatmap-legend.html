@@ -46,6 +46,7 @@
       prevent-series-bar
       complete-series-config="[[completeSeriesConfig]]"
       muted-series=[[mutedSeries]]
+      tick-size-inner="[[tickSizeInner]]"
       domain-changed="[[domainChanged]]">
     </px-vis-axis>
   </template>
@@ -111,19 +112,20 @@
           }
         },
 
-        dataExtents: {
-          type: Object,
-          value: function() {
-            return {
-              x: [0, 2],
-              y: [0, 2]
-            };
-          }
-        },
-
+        /**
+         * Debounce time before drawing.
+         */
         drawDebounceTime: {
           type: Number,
           value: 10
+        },
+
+        /**
+         * Length of the yAxis tick marks.
+         */
+        tickSizeInner: {
+          type: Number,
+          value: 0
         },
 
         /**
