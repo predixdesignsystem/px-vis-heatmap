@@ -121,6 +121,11 @@
           }
         },
 
+        drawDebounceTime: {
+          type: Number,
+          value: 10
+        },
+
         /**
         * This component doesn't use chartData, but some px-vis
         * comps require a valid chart data object.
@@ -140,65 +145,69 @@
       },
 
       observers: [
-        'drawElement(colorScale, width, height, margin.*, domainChanged)',
+        '_defineGradient(colorScale)',
+        '_drawRectangle(width, height, margin.*, domainChanged)',
         '_yAxisConfigChanged(yAxisConfig)'
       ],
 
-      ready: function() {
-      },
-
-      drawElement: function() {
+      _defineGradient: function() {
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
 
-        // remove old gradient and drawing
-        if (this.legend) {
-          this.legend.remove();
+        this.debounce('define-gradient', function() {
+          // remove old gradient and drawing
+          if (this.legend) {
+            this.legend.remove();
+          }
+          // calculate new gradient
+          const valueThresholds = this.colorScale.domain();
+          const valueRange = valueThresholds[valueThresholds.length - 1] - valueThresholds[0];
+          const colors = this.colorScale.range();
+          // define gradient for our legend drawing to use
+          this.legend = this.svg.append('defs').append('svg:linearGradient')
+            .attr('id', 'gradient')
+            .attr('x1', '100%')
+            .attr('y1', '0%')
+            .attr('x2', '100%')
+            .attr('y2', '100%').attr('spreadMethod', 'pad');
+          // because the value min/max are not always 0/100, we need to calculate the percentage
+          // for each value threshold in order to build a gradient
+          let percentage = 0;
+          let lastThreshold = valueThresholds[0];
+          colors.forEach((color, i) => {
+            percentage += (valueThresholds[i] - lastThreshold) / valueRange * 100;
+            lastThreshold = valueThresholds[i];
+            // use percentage to draw current color into gradient
+            this.legend.append('stop')
+              .attr('offset', percentage + '%')
+              .attr('stop-color', color)
+              .attr('stop-opacity', 1);
+          });
+        }.bind(this), this.drawDebounceTime);
+      },
+
+      _drawRectangle: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
         }
-        if (this.rect) {
-          this.rect.remove();
-        }
 
-        // update axis extents
-        this.dataExtents = this._calcExtents();
-
-        // calculate new gradient
-        const valueThresholds = this.colorScale.domain();
-        const valueRange = valueThresholds[valueThresholds.length - 1] - valueThresholds[0];
-        const colors = this.colorScale.range();
-
-        // define gradient for our legend drawing to use
-        this.legend = this.svg.append('defs').append('svg:linearGradient')
-          .attr('id', 'gradient')
-          .attr('x1', '100%')
-          .attr('y1', '0%')
-          .attr('x2', '100%')
-          .attr('y2', '100%').attr('spreadMethod', 'pad');
-
-        // because the value min/max are not always 0/100, we need to calculate the percentage
-        // for each value threshold in order to build a gradient
-        let percentage = 0;
-        let lastThreshold = valueThresholds[0];
-        colors.forEach((color, i) => {
-          percentage += (valueThresholds[i] - lastThreshold) / valueRange * 100;
-          lastThreshold = valueThresholds[i];
-          // use percentage to draw current color into gradient
-          this.legend.append('stop')
-            .attr('offset', percentage + '%')
-            .attr('stop-color', color)
-            .attr('stop-opacity', 1);
-        });
-
-        // draw rectangle and fill in with our gradient
-        const width = this.width - this.margin.right;
-        const height = this.height - this.margin.bottom - this.margin.top;
-        this.rect = this.svg.append('rect')
-          .attr('width', width)
-          .attr('height', height)
-          .style('fill', 'url(#gradient)')
-          // gradient draws top to bottom, so we need to flip it to match the scale which is bottom to top
-          .attr('transform', 'rotate(180, ' + (width / 2) + ', ' + (height / 2) + ')');
+        this.debounce('draw-rectangle', function() {
+          // remove old rectangle element
+          if (this.rect) {
+            this.rect.remove();
+          }
+          // update axis extents
+          this.dataExtents = this._calcExtents();
+          const width = this.width - this.margin.right;
+          const height = this.height - this.margin.bottom - this.margin.top;
+          this.rect = this.svg.append('rect')
+            .attr('width', width)
+            .attr('height', height)
+            .style('fill', 'url(#gradient)')
+            // gradient draws top to bottom, so we need to flip it to match the scale which is bottom to top
+            .attr('transform', 'rotate(180, ' + (width / 2) + ', ' + (height / 2) + ')');
+        }.bind(this), this.drawDebounceTime);
       },
 
       _calcExtents: function() {

@@ -206,6 +206,14 @@
           }
         },
 
+        /**
+         * Configuration object passed directly to the color scale legend.
+         * See px-vis-heatmap-legend.html for available properties.
+         */
+        legendConfig: {
+          type: Object
+        },
+
         _cellData: {
           type: Array
         },
@@ -227,6 +235,7 @@
         '_updateSeriesConfig(_colorsAreSet)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
+        '_legendConfigChanged(legendConfig)',
         '_updateSeriesKey(seriesKey)',
         '_updateColorScale(chartData.*, colors, domainChanged)'
       ],
@@ -329,6 +338,13 @@
           return;
         }
         this._applyConfigToElement(yAxisConfig, this.$.yAxis);
+      },
+
+      _legendConfigChanged: function(legendConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(legendConfig, this.$.legend);
       },
 
       _colorsSet: function() {
