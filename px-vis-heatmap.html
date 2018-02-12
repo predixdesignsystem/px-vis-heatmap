@@ -2,6 +2,7 @@
 <link rel="import" href="../px-vis/px-vis-scale.html">
 <link rel="import" href="../px-vis/px-vis-svg.html">
 <link rel="import" href="../px-vis/px-vis-axis.html">
+<link rel="import" href="../px-tooltip/px-tooltip.html">
 
 <link rel="import" href="../px-vis/px-vis-behavior-colors.html">
 <link rel="import" href="../px-vis/px-vis-behavior-common.html">
@@ -9,6 +10,8 @@
 
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
+
+<link rel="import" href="../px-vis/css/px-vis-styles.html">
 
 
 <dom-module id="px-vis-heatmap">
@@ -80,7 +83,10 @@
         y="[[y]]"
         series-key="[[seriesKey]]"
         complete-series-config="[[completeSeriesConfig]]"
-        domain-changed="[[domainChanged]]">
+        domain-changed="[[domainChanged]]"
+        on-mouseover="_handleCellMouseover"
+        on-mouseout="_handleCellMouseout"
+        on-click="_handleCellClick">
       </px-vis-heatmap-cell>
     </template>
 
@@ -93,6 +99,14 @@
       domain-changed="[[domainChanged]]">
     </px-vis-heatmap-legend>
 
+    <!-- tooltip -->
+    <px-tooltip
+      id="tooltip"
+      orientation="top"
+      delay="[[tooltipDelay]]"
+      ignore-target-events>
+      <div id="tooltipContent"></div>
+    </px-tooltip>
   </template>
   <script>
     Polymer({
@@ -214,6 +228,11 @@
           type: Object
         },
 
+        tooltipDelay: {
+          type: Number,
+          value: 0
+        },
+
         _cellData: {
           type: Array
         },
@@ -248,6 +267,7 @@
         this.set('numberOfLayers', 5);
         this.xAxisType = 'scaleBand';
         this.yAxisType = 'scaleBand';
+        this.tooltipContent = this.$.tooltip.querySelector('#tooltipContent');
       },
 
       _updateDataExtents: function() {
@@ -392,7 +412,66 @@
         this.set('_colorScale', Px.d3.scaleLinear()
           .domain(valueThresholds)
           .range(this.colors));
-      }
+      },
+
+      _handleCellMouseover: function(e, details) {
+        // show over cell value if available, otherwise over entire cell
+        const el = details.cell.getSvgTextElement() || details.cell.getSvgElement();
+        // update hover opacities and the tooltip
+        this._setHoveredCell(details.cell, 1, 0.3, this.tooltipDelay);
+        this._showTooltip(el, this._createTooltipMessage(details.cell));
+      },
+
+      _handleCellMouseout: function(e, details) {
+        this._setHoveredCell(null, 1, 1, 0);
+        this._closeTooltip();
+      },
+
+      _handleCellClick: function(e, detail) {
+        // TODO: remove log
+        console.info('clicked cell [value=' + detail.value + ']');
+      },
+
+      _setHoveredCell: function(hoveredCell, delay) {
+        let cells;
+        // get all cell components
+        if (this.shadowRoot) {
+          cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
+        } else {
+          cells = Polymer.dom(this.root).querySelectorAll('px-vis-heatmap-cell');
+        }
+        // lower opacity for all non-hovered elements
+        this.debounce('opacityTimeout', () => {
+          cells.forEach((cell) => {
+            if (hoveredCell && hoveredCell !== cell) {
+              // lower opacity
+              cell.getSvgElement().classList.add('primaryDataMask');
+            } else {
+              // set opacity to default
+              cell.getSvgElement().classList.remove('primaryDataMask');
+            }
+          });
+        }, delay);
+      },
+
+      _showTooltip: function(el, msg) {
+        this.$.tooltip.for = el;
+        this.tooltipContent.innerHTML = msg;
+        this.$.tooltip.opened = true;
+      },
+
+      _closeTooltip: function() {
+        this.$.tooltip.opened = false;
+      },
+
+      _createTooltipMessage: function(cell) {
+        let msg = '<h1 style="text-weight:bold;font-size:125%;">';
+        msg += 'Asset ' + cell._getValue('x') + ', ' + cell._getValue('y');
+        msg += '</h1>';
+        // use parseFloat to be safe of XSS
+        msg += cell._getValue('value');
+        return msg;
+      },
 
     });
   </script>

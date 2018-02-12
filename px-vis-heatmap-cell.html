@@ -4,6 +4,8 @@
 <link rel="import" href="../px-vis/px-vis-scale.html">
 <link rel="import" href="../px-vis/px-vis-svg.html">
 
+<link rel="import" href="../px-vis/css/px-vis-styles.html">
+
 
 <dom-module id="px-vis-heatmap-cell">
   <script>
@@ -126,9 +128,33 @@
 
       detached: function() {
         // remove our data from svg
-        if (this._svgGroup) {
+        if (!this._isObjEmpty(this._svgGroup)) {
           this._svgGroup.remove();
         }
+      },
+
+      /**
+       * Returns SVG group element (<g>) which contains the cell drawing.
+       */
+      getSvgElement: function() {
+        if (this._svgGroup && this._svgGroup._groups && this._svgGroup._groups[0]) {
+          return this._svgGroup._groups[0][0];
+        }
+        return undefined;
+      },
+
+      /**
+       * Returns SVG text element (<text>) which contains the cell value.
+       */
+      getSvgTextElement: function() {
+        let text;
+        if (this._svgGroup) {
+          const textD3 = this._svgGroup.select('text');
+          if (textD3 && textD3._groups && textD3._groups[0]) {
+            text = textD3._groups[0][0];
+          }
+        }
+        return text;
       },
 
       /**
@@ -160,8 +186,8 @@
           console.warn('Cannot draw without valid x and y functions');
           return;
         }
-        // create svg group and append rectangle to represent our cell
-        this._svgGroup = this.svg.append('g');
+        // create svg group that contains all drawings (use px hover transition class)
+        this._svgGroup = this.svg.append('g').attr('class', 'hoverTransition');
         // convert chart values to svg points
         const svgData = {
           x: this.x(this._getValue('x')),
@@ -189,6 +215,11 @@
           this._appendText(this._svgGroup, textPos.x, textPos.y,
             this._getValue('value'), this.textColor, this.textAlign, this.fontFamily, this.fontSize);
         }
+
+        // event handling
+        this._svgGroup.on('mouseover', this._handleMouseOver.bind(this));
+        this._svgGroup.on('mouseout', this._handleMouseOut.bind(this));
+        this._svgGroup.on('click', this._handleClick.bind(this));
       },
 
       /**
@@ -251,6 +282,28 @@
         }
         return this.colorScale(value);
       },
+
+      _handleMouseOver: function(d, i, svgEl) {
+        this._fireEvent('mouseover', svgEl[0]);
+      },
+
+      _handleMouseOut: function(d, i, svgEl) {
+        this._fireEvent('mouseout', svgEl[0]);
+      },
+
+      _handleClick: function(d, i, svgEl) {
+        this._fireEvent('click', svgEl[0]);
+      },
+
+      _fireEvent: function(eventName, svgEl) {
+        this.fire(eventName, {
+          cell: this,
+          x: this._getValue('x'),
+          y: this._getValue('y'),
+          value: this._getValue('value'),
+          svgEl: svgEl
+        });
+      }
 
     });
   </script>

@@ -56,7 +56,8 @@
           padding-outer="[[props.paddingOuter.value]]"
           show-cell-value="[[props.showCellValue.value]]"
           x-axis-config="[[props.xAxisConfig.value]]"
-          y-axis-config="[[props.yAxisConfig.value]]">
+          y-axis-config="[[props.yAxisConfig.value]]"
+          tooltip-delay="[[props.tooltipDelay.value]]">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
@@ -243,6 +244,12 @@
         defaultValue: true
       },
 
+      tooltipDelay: {
+        type: Number,
+        inputType: 'number',
+        defaultValue: 0
+      },
+
       xAxisConfig: {
         type: Object,
         inputType: 'code:JSON',
@@ -270,6 +277,9 @@
       const xSize = Number.parseInt(this.$.xSize.value);
       const ySize = Number.parseInt(this.$.ySize.value);
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
+        // update extents
+        chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
+        // update data
         chart.set('chartData', this._generateData(xSize, ySize));
       }
     },
@@ -278,15 +288,31 @@
       const data = [];
       for (let x = 0; x < xNum; x++) {
         for (let y = 0; y < yNum; y++) {
+          // increase values in a diaganol pattern
+          const power = (x + y) / (xNum + yNum - 2);
           data.push({
             x: x,
             y: y,
-            value: Math.random() * 100
+            value: Math.round(100 * power)
           });
         }
       }
       return data;
     },
+
+    _generateChartExtents: function(xNum, yNum) {
+      const exts = {
+        x: [],
+        y: [],
+        val: [0, 100]
+      };
+      for (let i = 0; i < xNum; i++) {
+        exts.x.push(i);
+      }
+      for (let i = 0; i < yNum; i++) {
+        exts.y.push(i);
+      }
+    }
 
   });
 
