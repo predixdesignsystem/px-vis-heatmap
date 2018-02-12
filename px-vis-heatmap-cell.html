@@ -142,6 +142,20 @@
       },
 
       /**
+       * Returns SVG text element (<text>) which contains the cell value.
+       */
+      getSvgTextElement: function() {
+        let text;
+        if (this._svgGroup) {
+          const textD3 = this._svgGroup.select('text');
+          if (textD3 && textD3._groups && textD3._groups[0]) {
+            text = textD3._groups[0][0];
+          }
+        }
+        return text;
+      },
+
+      /**
        * Draw or update the cell.
        */
       _draw: function() {

@@ -2,6 +2,7 @@
 <link rel="import" href="../px-vis/px-vis-scale.html">
 <link rel="import" href="../px-vis/px-vis-svg.html">
 <link rel="import" href="../px-vis/px-vis-axis.html">
+<link rel="import" href="../px-tooltip/px-tooltip.html">
 
 <link rel="import" href="../px-vis/px-vis-behavior-colors.html">
 <link rel="import" href="../px-vis/px-vis-behavior-common.html">
@@ -96,6 +97,14 @@
       domain-changed="[[domainChanged]]">
     </px-vis-heatmap-legend>
 
+    <!-- tooltip -->
+    <px-tooltip
+      id="tooltip"
+      orientation="top"
+      delay="[[tooltipDelay]]"
+      ignore-target-events>
+      <div id="tooltipContent"></div>
+    </px-tooltip>
   </template>
   <script>
     Polymer({
@@ -217,6 +226,11 @@
           type: Object
         },
 
+        tooltipDelay: {
+          type: Number,
+          value: 0
+        },
+
         _cellData: {
           type: Array
         },
@@ -251,6 +265,7 @@
         this.set('numberOfLayers', 5);
         this.xAxisType = 'scaleBand';
         this.yAxisType = 'scaleBand';
+        this.tooltipContent = this.$.tooltip.querySelector('#tooltipContent');
       },
 
       _updateDataExtents: function() {
@@ -398,11 +413,16 @@
       },
 
       _handleCellMouseover: function(e, details) {
-        this._setHoveredCell(details.cell, 1, 0.3, 0);
+        // show over cell value if available, otherwise over entire cell
+        const el = details.cell.getSvgTextElement() || details.cell.getSvgElement();
+        // update hover opacities and the tooltip
+        this._setHoveredCell(details.cell, 1, 0.3, this.tooltipDelay);
+        this._showTooltip(el, this._createTooltipMessage(details.cell));
       },
 
       _handleCellMouseout: function(e, details) {
-        this._setHoveredCell(details.cell, 1, 1, 0);
+        this._setHoveredCell(details.cell, 1, 1, this.tooltipDelay);
+        this._closeTooltip();
       },
 
       _handleCellClick: function(e, detail) {
@@ -427,7 +447,26 @@
             }
           });
         }, delay);
-      }
+      },
+
+      _showTooltip: function(el, msg) {
+        this.$.tooltip.for = el;
+        this.tooltipContent.innerHTML = msg;
+        this.$.tooltip.opened = true;
+      },
+
+      _closeTooltip: function() {
+        this.$.tooltip.opened = false;
+      },
+
+      _createTooltipMessage: function(cell) {
+        let msg = '<h1 style="text-weight:bold;font-size:125%;">';
+        msg += 'Asset ' + cell._getValue('x') + ', ' + cell._getValue('y');
+        msg += '</h1>';
+        // use parseFloat to be safe of XSS
+        msg += cell._getValue('value');
+        return msg;
+      },
 
     });
   </script>
