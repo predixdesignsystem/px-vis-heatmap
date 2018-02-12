@@ -4,6 +4,8 @@
 <link rel="import" href="../px-vis/px-vis-scale.html">
 <link rel="import" href="../px-vis/px-vis-svg.html">
 
+<link rel="import" href="../px-vis/css/px-vis-styles.html">
+
 
 <dom-module id="px-vis-heatmap-cell">
   <script>
@@ -184,8 +186,8 @@
           console.warn('Cannot draw without valid x and y functions');
           return;
         }
-        // create svg group and append rectangle to represent our cell
-        this._svgGroup = this.svg.append('g');
+        // create svg group that contains all drawings (use px hover transition class)
+        this._svgGroup = this.svg.append('g').attr('class', 'hoverTransition');
         // convert chart values to svg points
         const svgData = {
           x: this.x(this._getValue('x')),
