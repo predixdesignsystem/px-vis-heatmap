@@ -1,0 +1,74 @@
+<script>
+
+  // Set to true to add breakpoint to each checkBreak call
+  var breakAfterTest = false;
+
+  function checkBreak() {
+    if (breakAfterTest) {
+      debugger; // eslint-disable-line
+    }
+  }
+
+  /**
+   * Will wait until chart is updated
+   * Will break if breakAfterTest has been set to true
+   */
+  function waitDrawUpdate(instance, callback) {
+    if (Polymer.Debouncer) {
+      window._testDebouncer = Polymer.Debouncer.debounce(
+        window._testDebouncer, // initially undefined
+        Polymer.Async.timeOut.after(1000),
+        () => {
+          checkBreak();
+          callback();
+        });
+    } else {
+      instance.debounce('_testDebouncer', () => {
+        checkBreak();
+        callback();
+      }, 1000);
+    }
+  }
+
+  function getValues(amount) {
+    const values = [];
+    for (let i = 0; i < amount; ++i) {
+      values.push(i);
+    }
+    return values;
+  }
+
+  function getAlphebets(amount, capital) {
+    const alphabets = [];
+    const a = 'a'.charCodeAt(0);
+    for (let i = 0; i < amount; ++i) {
+      let char = String.fromCharCode(a + i);
+      if (capital) {
+        char = char.toUpperCase();
+      }
+      alphabets.push(char);
+    }
+    return alphabets;
+  }
+
+  function generateChartData(xSize, ySize) {
+    var data = [];
+    const xLabels = getAlphebets(xSize, true);
+    const yLabels = getAlphebets(ySize, false);
+    const values = getValues(xSize * ySize);
+
+    for (let x = 0; x < xLabels.length; ++x) {
+      for (let y = 0; y < yLabels.length; ++y) {
+        const index = y * xSize + x;
+        data.push({
+          x: xLabels[x],
+          y: yLabels[y],
+          value: values[index]
+        });
+      }
+    }
+
+    return data;
+  }
+
+</script>
