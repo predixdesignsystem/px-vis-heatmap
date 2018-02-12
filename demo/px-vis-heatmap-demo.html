@@ -49,6 +49,8 @@
           height="[[props.height.value]]"
           margin="[[props.margin.value]]"
           chart-data="[[props.chartData.value]]"
+          chart-extents="[[props.chartExtents.value]]"
+          colors="[[props.colors.value]]"
           series-config="[[props.seriesConfig.value]]"
           scale-padding="[[props.scalePadding.value]]"
           padding-outer="[[props.paddingOuter.value]]"
@@ -145,27 +147,27 @@
           {
             x: 'Cat A',
             y: 'Cat 1',
-            value: 50
+            value: 0
           },
           {
             x: 'Cat A',
             y: 'Cat 2',
-            value: 50
+            value: 10
           },
           {
             x: 'Cat A',
             y: 'Cat 3',
-            value: 50
+            value: 20
           },
           {
             x: 'Cat B',
             y: 'Cat 1',
-            value: 50
+            value: 30
           },
           {
             x: 'Cat B',
             y: 'Cat 2',
-            value: 50
+            value: 40
           },
           {
             x: 'Cat B',
@@ -175,18 +177,38 @@
           {
             x: 'Cat C',
             y: 'Cat 1',
-            value: 50
+            value: 65
           },
           {
             x: 'Cat C',
             y: 'Cat 2',
-            value: 50
+            value: 75
           },
           {
             x: 'Cat C',
             y: 'Cat 3',
-            value: 50
+            value: 100
           },
+        ]
+      },
+
+      chartExtents: {
+        type: Object,
+        inputType: 'code:JSON',
+        defaultValue: {
+          x: ['Cat A', 'Cat B', 'Cat C'],
+          y: ['Cat 1', 'Cat 2', 'Cat 3'],
+          value: [0, 100]
+        }
+      },
+
+      colors: {
+        type: Array,
+        inputType: 'code:JSON',
+        defaultValue: [
+          'blue',
+          'violet',
+          'red'
         ]
       },
 

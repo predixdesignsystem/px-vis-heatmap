@@ -42,6 +42,19 @@
         },
 
         /**
+         * Function used to convert values to colors.
+         *
+         * Example of colorScale creation:
+         *
+         * const colorScale = Px.d3.scaleLinear()
+         *   .domain([0, 25, 50])
+         *   .range(['blue', 'red', 'green']);
+         */
+        colorScale: {
+          type: Function
+        },
+
+        /**
          * Fill color of cell. If set, this color will override the default color
          * which is calculated by the cell value and the color scale.
          */
@@ -107,7 +120,7 @@
       },
 
       observers: [
-        '_draw(data, showCellValue, svg, x, y, domainChanged, completeSeriesConfig, seriesKey)',
+        '_draw(data, showCellValue, svg, x, y, domainChanged, completeSeriesConfig, seriesKey, colorScale)',
         '_updateColors(fillColor, strokeColor)'
       ],
 
@@ -163,7 +176,7 @@
         }
 
         // calc colors
-        const fillColor = this.fillColor || this._calcCellColor();
+        const fillColor = this.fillColor || this._calcCellColor(this._getValue('value'));
 
         this._appendRectangle(this._svgGroup, svgData.x, svgData.y,
           svgData.width, svgData.height, this.strokeColor, fillColor);
@@ -233,8 +246,10 @@
       },
 
       _calcCellColor: function(value) {
-        // TODO: impl value to color
-        return '#' + ((1 << 24) * Math.random() | 0).toString(16);
+        if (!this.colorScale) {
+          return;
+        }
+        return this.colorScale(value);
       },
 
     });

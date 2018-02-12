@@ -1,0 +1,236 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../px-vis/px-vis-scale.html">
+<link rel="import" href="../px-vis/px-vis-svg.html">
+<link rel="import" href="../px-vis/px-vis-axis.html">
+
+<link rel="import" href="../px-vis/px-vis-behavior-colors.html">
+<link rel="import" href="../px-vis/px-vis-behavior-common.html">
+<link rel="import" href="../px-vis/px-vis-behavior-chart.html">
+
+
+<dom-module id="px-vis-heatmap-legend">
+  <template>
+    <px-vis-svg
+      width="[[width]]"
+      height="[[height]]"
+      margin="[[margin]]"
+      svg="{{svg}}">
+    </px-vis-svg>
+    <px-vis-scale
+      id="scale"
+      x-axis-type="linear"
+      y-axis-type="linear"
+      complete-series-config="[[completeSeriesConfig]]"
+      chart-data="[[_emptyChartData]]"
+      chart-extents="[[chartExtents]]"
+      data-extents="[[dataExtents]]"
+      width="[[width]]"
+      height="[[height]]"
+      margin="[[margin]]"
+      x="{{x}}"
+      y="{{y}}"
+      scale-padding="[[scalePadding]]"
+      domain-changed="{{domainChanged}}">
+    </px-vis-scale>
+    <!-- y axis -->
+    <px-vis-axis
+      id="yAxis"
+      svg="[[svg]]"
+      axis="[[y]]"
+      axis-type="linear"
+      margin="[[margin]]"
+      width="[[width]]"
+      height="[[height]]"
+      orientation="right"
+      label-position="center"
+      prevent-series-bar
+      complete-series-config="[[completeSeriesConfig]]"
+      muted-series=[[mutedSeries]]
+      tick-size-inner="[[tickSizeInner]]"
+      domain-changed="[[domainChanged]]">
+    </px-vis-axis>
+  </template>
+  <script>
+    Polymer({
+
+      is: 'px-vis-heatmap-legend',
+
+      behaviors: [
+        PxVisBehavior.axisTypes,
+        PxVisBehavior.baseSize,
+        PxVisBehavior.chartExtents,
+        PxVisBehavior.completeSeriesConfig,
+        PxVisBehavior.dataExtents,
+        PxVisBehavior.margins,
+        PxVisBehavior.observerCheck,
+        PxVisBehaviorD3.domainUpdate,
+        PxVisBehaviorChart.axisConfigs,
+        PxVisBehaviorChart.subConfiguration
+      ],
+
+      properties: {
+
+        /**
+         * Function used to convert chart value to color value.
+         */
+        colorScale: {
+          type: Object
+        },
+
+        /**
+        * The width of the elem; generally the width of the charting area for most components
+        */
+        width: {
+          type: Number,
+          value: 100,
+          notify: true
+        },
+
+        /**
+        * The height of the component; generally the height of the charting area for most components.
+        */
+        height: {
+          type: Number,
+          value: 400,
+          notify: true
+        },
+
+        /**
+        * Defines the base margin for the chart. Calcs are run to add to the
+        * margin to accommodate axes and other elements which exist within the SVG frame,
+        * but outside the chart frame.
+        */
+        margin: {
+          type: Object,
+          value: function() {
+            return {
+              'top': 0,
+              'right': 50,
+              'bottom': 0,
+              'left': 0
+            };
+          }
+        },
+
+        /**
+         * Debounce time before drawing.
+         */
+        drawDebounceTime: {
+          type: Number,
+          value: 10
+        },
+
+        /**
+         * Length of the yAxis tick marks.
+         */
+        tickSizeInner: {
+          type: Number,
+          value: 0
+        },
+
+        /**
+        * This component doesn't use chartData, but some px-vis
+        * comps require a valid chart data object.
+        */
+        _emptyChartData: {
+          type: Array,
+          value: function() {
+            return [
+              {
+                x: 0,
+                y: 0
+              }
+            ];
+          }
+        },
+
+      },
+
+      observers: [
+        '_defineGradient(colorScale)',
+        '_drawRectangle(width, height, margin.*, domainChanged)',
+        '_yAxisConfigChanged(yAxisConfig)'
+      ],
+
+      _defineGradient: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+
+        this.debounce('define-gradient', function() {
+          // remove old gradient and drawing
+          if (this.legend) {
+            this.legend.remove();
+          }
+          // calculate new gradient
+          const valueThresholds = this.colorScale.domain();
+          const valueRange = valueThresholds[valueThresholds.length - 1] - valueThresholds[0];
+          const colors = this.colorScale.range();
+          // define gradient for our legend drawing to use
+          this.legend = this.svg.append('defs').append('svg:linearGradient')
+            .attr('id', 'gradient')
+            .attr('x1', '100%')
+            .attr('y1', '0%')
+            .attr('x2', '100%')
+            .attr('y2', '100%').attr('spreadMethod', 'pad');
+          // because the value min/max are not always 0/100, we need to calculate the percentage
+          // for each value threshold in order to build a gradient
+          let percentage = 0;
+          let lastThreshold = valueThresholds[0];
+          colors.forEach((color, i) => {
+            percentage += (valueThresholds[i] - lastThreshold) / valueRange * 100;
+            lastThreshold = valueThresholds[i];
+            // use percentage to draw current color into gradient
+            this.legend.append('stop')
+              .attr('offset', percentage + '%')
+              .attr('stop-color', color)
+              .attr('stop-opacity', 1);
+          });
+        }.bind(this), this.drawDebounceTime);
+      },
+
+      _drawRectangle: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+
+        this.debounce('draw-rectangle', function() {
+          // remove old rectangle element
+          if (this.rect) {
+            this.rect.remove();
+          }
+          // update axis extents
+          this.dataExtents = this._calcExtents();
+          const width = this.width - this.margin.right;
+          const height = this.height - this.margin.bottom - this.margin.top;
+          this.rect = this.svg.append('rect')
+            .attr('width', width)
+            .attr('height', height)
+            .style('fill', 'url(#gradient)')
+            // gradient draws top to bottom, so we need to flip it to match the scale which is bottom to top
+            .attr('transform', 'rotate(180, ' + (width / 2) + ', ' + (height / 2) + ')');
+        }.bind(this), this.drawDebounceTime);
+      },
+
+      _calcExtents: function() {
+        const exts = {
+          x: [0, 1],
+          y: [0, 1]
+        };
+        if (this.colorScale) {
+          const values = this.colorScale.domain();
+          exts.y = [values[0], values[values.length - 1]];
+        }
+        return exts;
+      },
+
+      _yAxisConfigChanged: function(yAxisConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(yAxisConfig, this.$.yAxis);
+      }
+
+    });
+  </script>
+</dom-module>
