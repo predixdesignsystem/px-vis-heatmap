@@ -56,7 +56,8 @@
           padding-outer="[[props.paddingOuter.value]]"
           show-cell-value="[[props.showCellValue.value]]"
           x-axis-config="[[props.xAxisConfig.value]]"
-          y-axis-config="[[props.yAxisConfig.value]]">
+          y-axis-config="[[props.yAxisConfig.value]]"
+          tooltip-delay="[[props.tooltipDelay.value]]">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
@@ -241,6 +242,12 @@
         type: Boolean,
         inputType: 'toggle',
         defaultValue: true
+      },
+
+      tooltipDelay: {
+        type: Number,
+        inputType: 'number',
+        defaultValue: 0
       },
 
       xAxisConfig: {
