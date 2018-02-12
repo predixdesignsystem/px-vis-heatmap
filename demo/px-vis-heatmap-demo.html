@@ -278,10 +278,12 @@
       const data = [];
       for (let x = 0; x < xNum; x++) {
         for (let y = 0; y < yNum; y++) {
+          // increase values in a diaganol pattern
+          const power = (x + y) / (xNum + yNum - 2);
           data.push({
             x: x,
             y: y,
-            value: Math.random() * 100
+            value: Math.round(100 * power)
           });
         }
       }
