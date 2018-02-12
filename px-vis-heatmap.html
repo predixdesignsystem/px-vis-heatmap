@@ -11,6 +11,8 @@
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
 
+<link rel="import" href="../px-vis/css/px-vis-styles.html">
+
 
 <dom-module id="px-vis-heatmap">
   <template>
@@ -421,7 +423,7 @@
       },
 
       _handleCellMouseout: function(e, details) {
-        this._setHoveredCell(details.cell, 1, 1, 0);
+        this._setHoveredCell(null, 1, 1, 0);
         this._closeTooltip();
       },
 
@@ -430,8 +432,9 @@
         console.info('clicked cell [value=' + detail.value + ']');
       },
 
-      _setHoveredCell: function(hoveredCell, hoveredOpacity, nonHoveredOpacity, delay) {
+      _setHoveredCell: function(hoveredCell, delay) {
         let cells;
+        // get all cell components
         if (this.shadowRoot) {
           cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
         } else {
@@ -440,10 +443,12 @@
         // lower opacity for all non-hovered elements
         this.debounce('opacityTimeout', () => {
           cells.forEach((cell) => {
-            if (hoveredCell && hoveredCell === cell) {
-              cell.getSvgElement().setAttribute('opacity', hoveredOpacity);
+            if (hoveredCell && hoveredCell !== cell) {
+              // lower opacity
+              cell.getSvgElement().classList.add('primaryDataMask');
             } else {
-              cell.getSvgElement().setAttribute('opacity', nonHoveredOpacity);
+              // set opacity to default
+              cell.getSvgElement().classList.remove('primaryDataMask');
             }
           });
         }, delay);
