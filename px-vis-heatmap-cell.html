@@ -128,7 +128,7 @@
 
       detached: function() {
         // remove our data from svg
-        if (this._svgGroup) {
+        if (!this._isObjEmpty(this._svgGroup)) {
           this._svgGroup.remove();
         }
       },
