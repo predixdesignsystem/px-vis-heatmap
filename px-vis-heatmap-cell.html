@@ -132,6 +132,16 @@
       },
 
       /**
+       * Returns SVG group element (<g>) which contains the cell drawing.
+       */
+      getSvgElement: function() {
+        if (this._svgGroup && this._svgGroup._groups && this._svgGroup._groups[0]) {
+          return this._svgGroup._groups[0][0];
+        }
+        return undefined;
+      },
+
+      /**
        * Draw or update the cell.
        */
       _draw: function() {
@@ -271,6 +281,7 @@
 
       _fireEvent: function(eventName, svgEl) {
         this.fire(eventName, {
+          cell: this,
           x: this._getValue('x'),
           y: this._getValue('y'),
           value: this._getValue('value'),

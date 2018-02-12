@@ -397,16 +397,36 @@
           .range(this.colors));
       },
 
-      _handleCellMouseover: function(e) {
-        console.log('mouseover');
+      _handleCellMouseover: function(e, details) {
+        this._setHoveredCell(details.cell, 1, 0.3, 0);
       },
 
-      _handleCellMouseout: function(e) {
-        console.log('mouseout');
+      _handleCellMouseout: function(e, details) {
+        this._setHoveredCell(details.cell, 1, 1, 0);
       },
 
-      _handleCellClick: function(e) {
-        console.log('click');
+      _handleCellClick: function(e, detail) {
+        // TODO: remove log
+        console.info('clicked cell [value=' + detail.value + ']');
+      },
+
+      _setHoveredCell: function(hoveredCell, hoveredOpacity, nonHoveredOpacity, delay) {
+        let cells;
+        if (this.shadowRoot) {
+          cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
+        } else {
+          cells = Polymer.dom(this.root).querySelectorAll('px-vis-heatmap-cell');
+        }
+        // lower opacity for all non-hovered elements
+        this.debounce('opacityTimeout', () => {
+          cells.forEach((cell) => {
+            if (hoveredCell && hoveredCell === cell) {
+              cell.getSvgElement().setAttribute('opacity', hoveredOpacity);
+            } else {
+              cell.getSvgElement().setAttribute('opacity', nonHoveredOpacity);
+            }
+          });
+        }, delay);
       }
 
     });
