@@ -80,7 +80,10 @@
         y="[[y]]"
         series-key="[[seriesKey]]"
         complete-series-config="[[completeSeriesConfig]]"
-        domain-changed="[[domainChanged]]">
+        domain-changed="[[domainChanged]]"
+        on-mouseover="_handleCellMouseover"
+        on-mouseout="_handleCellMouseout"
+        on-click="_handleCellClick">
       </px-vis-heatmap-cell>
     </template>
 
@@ -392,6 +395,18 @@
         this.set('_colorScale', Px.d3.scaleLinear()
           .domain(valueThresholds)
           .range(this.colors));
+      },
+
+      _handleCellMouseover: function(e) {
+        console.log('mouseover');
+      },
+
+      _handleCellMouseout: function(e) {
+        console.log('mouseout');
+      },
+
+      _handleCellClick: function(e) {
+        console.log('click');
       }
 
     });
