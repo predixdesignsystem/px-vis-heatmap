@@ -49,6 +49,7 @@
           height="[[props.height.value]]"
           margin="[[props.margin.value]]"
           chart-data="[[props.chartData.value]]"
+          chart-extents="[[props.chartExtents.value]]"
           colors="[[props.colors.value]]"
           series-config="[[props.seriesConfig.value]]"
           scale-padding="[[props.scalePadding.value]]"
@@ -189,6 +190,16 @@
             value: 100
           },
         ]
+      },
+
+      chartExtents: {
+        type: Object,
+        inputType: 'code:JSON',
+        defaultValue: {
+          x: ['Cat A', 'Cat B', 'Cat C'],
+          y: ['Cat 1', 'Cat 2', 'Cat 3'],
+          value: [0, 100]
+        }
       },
 
       colors: {
