@@ -237,6 +237,15 @@
           value: 0
         },
 
+        /**
+         * Delay draw by this amount of milliseconds.
+         * Useful for avoiding mutliple quick redraws.
+         */
+        drawDebounceTime: {
+          type: Number,
+          value: 100
+        },
+
         _cellData: {
           type: Array
         },
@@ -279,23 +288,29 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        this.canvasContext.clearRect(0, 0, this.width, this.height);
-        this.chartData.forEach((d) => {
-          this.canvasContext.beginPath();
-          this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
-          this.canvasContext.fillStyle = this._colorScale(d.value);
-          this.canvasContext.fill();
-          // draw value if needed
-          if (this.showCellValue) {
-            const xPos = this.x(d.x) + this.x.bandwidth() / 2;
-            const yPos = this.y(d.y) + this.y.bandwidth() / 2;
+        this.debounce('draw', () => {
+          this.canvasContext.clearRect(0, 0, this.width, this.height);
+          this.chartData.forEach((d) => {
             this.canvasContext.beginPath();
-            this.canvasContext.font = '12px Arial';
-            this.canvasContext.fillStyle = 'black';
-            this.canvasContext.textAlign = 'center';
-            this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
-          }
-        });
+            this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
+            this.canvasContext.fillStyle = this._colorScale(d.value);
+            this.canvasContext.fill();
+            // draw value if needed
+            if (this.showCellValue) {
+              const xPos = this.x(d.x) + this.x.bandwidth() / 2;
+              const yPos = this.y(d.y) + this.y.bandwidth() / 2;
+              this.canvasContext.beginPath();
+              this.canvasContext.font = '12px Arial';
+              this.canvasContext.fillStyle = 'black';
+              this.canvasContext.textAlign = 'center';
+              this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
+            }
+          });
+          // fire rendered event
+          this.fire('draw', {
+            heatmap: this
+          });
+        }, this.drawDebounceTime);
       },
 
       _updateDataExtents: function() {
