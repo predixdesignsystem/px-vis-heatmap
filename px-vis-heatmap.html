@@ -74,7 +74,7 @@
     </px-vis-axis>
     <!-- heatmap cells -->
     <template is="dom-repeat" items="[[chartData]]">
-      <px-vis-heatmap-cell
+      <px-vis-heatmap-cell restamp
         data="[[item]]"
         show-cell-value="[[showCellValue]]"
         color-scale="[[_colorScale]]"
@@ -443,6 +443,9 @@
         // lower opacity for all non-hovered elements
         this.debounce('opacityTimeout', () => {
           cells.forEach((cell) => {
+            if (!cell || !cell.getSvgElement()) {
+              return;
+            }
             if (hoveredCell && hoveredCell !== cell) {
               // lower opacity
               cell.getSvgElement().classList.add('primaryDataMask');
