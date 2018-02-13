@@ -51,19 +51,23 @@
     return alphabets;
   }
 
+  function reverse(str) {
+    return str.split('').reverse().join('');
+  }
+
   function getAlphabetCombos(amount, capital) {
     const chars = Math.ceil(Math.log(amount) / Math.log(24));
     const alphabets = getAlphabets(24, capital);
     const combos = [];
     for (let i = 0; i < amount; ++i) {
       let combo = '';
-      let value = i + 1;
-      for (let c = 0; value > 0 && c < chars; ++c) {
+      let value = i;
+      for (let c = 0; value >= 0 && c < chars; ++c) {
         const thisLetter = value % 24;
         combo += alphabets[thisLetter];
         value = (value - thisLetter) / 24;
       }
-      combos.push(combo);
+      combos.push(reverse(combo));
     }
     return combos;
   }
