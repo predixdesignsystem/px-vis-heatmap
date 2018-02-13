@@ -10,35 +10,29 @@
 
 <dom-module id="px-vis-heatmap-legend">
   <template>
-    <px-vis-svg
-      width="[[width]]"
-      height="[[height]]"
-      margin="[[margin]]"
-      svg="{{svg}}">
-    </px-vis-svg>
     <px-vis-scale
       id="scale"
       x-axis-type="linear"
       y-axis-type="linear"
       complete-series-config="[[completeSeriesConfig]]"
       chart-data="[[_emptyChartData]]"
-      chart-extents="[[chartExtents]]"
+      chart-extents="[[_axisExtents]]"
       data-extents="[[dataExtents]]"
       width="[[width]]"
       height="[[height]]"
       margin="[[margin]]"
-      x="{{x}}"
-      y="{{y}}"
+      x="{{_axisX}}"
+      y="{{_axisY}}"
       scale-padding="[[scalePadding]]"
-      domain-changed="{{domainChanged}}">
+      domain-changed="{{_axisDomainChanged}}">
     </px-vis-scale>
     <!-- y axis -->
     <px-vis-axis
       id="yAxis"
       svg="[[svg]]"
-      axis="[[y]]"
+      axis="[[_axisY]]"
       axis-type="linear"
-      margin="[[margin]]"
+      margin="[[_axisMargin]]"
       width="[[width]]"
       height="[[height]]"
       orientation="right"
@@ -47,7 +41,7 @@
       complete-series-config="[[completeSeriesConfig]]"
       muted-series=[[mutedSeries]]
       tick-size-inner="[[tickSizeInner]]"
-      domain-changed="[[domainChanged]]">
+      domain-changed="[[_axisDomainChanged]]">
     </px-vis-axis>
   </template>
   <script>
@@ -78,7 +72,15 @@
         },
 
         /**
-        * The width of the elem; generally the width of the charting area for most components
+         * Widht of the color scale legend. This does not include the axis.
+         */
+        legendWidth: {
+          type: Number,
+          value: 50
+        },
+
+        /**
+        * Widht of the entire charting area.
         */
         width: {
           type: Number,
@@ -87,7 +89,7 @@
         },
 
         /**
-        * The height of the component; generally the height of the charting area for most components.
+        * The height of the entire charting area.
         */
         height: {
           type: Number,
@@ -96,28 +98,11 @@
         },
 
         /**
-        * Defines the base margin for the chart. Calcs are run to add to the
-        * margin to accommodate axes and other elements which exist within the SVG frame,
-        * but outside the chart frame.
-        */
-        margin: {
-          type: Object,
-          value: function() {
-            return {
-              'top': 0,
-              'right': 50,
-              'bottom': 0,
-              'left': 0
-            };
-          }
-        },
-
-        /**
          * Debounce time before drawing.
          */
         drawDebounceTime: {
           type: Number,
-          value: 10
+          value: 100
         },
 
         /**
@@ -126,6 +111,14 @@
         tickSizeInner: {
           type: Number,
           value: 0
+        },
+
+        /**
+         * Gap between the heatmap and this legend.
+         */
+        gapSize: {
+          type: Number,
+          value: 20
         },
 
         /**
@@ -144,13 +137,68 @@
           }
         },
 
+        /**
+        * Calculated margin used for the legend's axis.
+        */
+        _axisMargin: {
+          type: Object,
+          value: function() {
+            return {
+              'top': 0,
+              'right': 0,
+              'bottom': 0,
+              'left': 0
+            };
+          }
+        },
+
+        _axisY: {
+          type: Function
+        },
+
+        _axisX: {
+          type: Function
+        },
+
+        _axisDomainChanged: {
+          type: Boolean,
+          value: false
+        },
+
+        _axisExtents: {
+          type: Object
+        }
+
       },
 
       observers: [
         '_defineGradient(colorScale)',
-        '_drawRectangle(width, height, margin.*, domainChanged)',
-        '_yAxisConfigChanged(yAxisConfig)'
+        '_drawRectangle(width, height, legendWidth, _axisMargin.*, domainChanged)',
+        '_yAxisConfigChanged(yAxisConfig)',
+        '_updateAxisMargin(width, height, legendWidth, gapSize, margin.*, x, y, domainChanged)',
+        '_updateAxisExtents(_axisDomainChanged, _axisX, _axisY, colorScale)'
       ],
+
+      _updateAxisExtents: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.set('_axisExtents', this._calcExtents());
+      },
+
+      _updateAxisMargin: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        let right = this.margin.right - this.legendWidth - this.gapSize;
+        right = right >= 0 ? right : 0;
+        this.set('_axisMargin', {
+          right: right,
+          left: this.margin.left,
+          top: this.margin.top,
+          bottom: this.margin.bottom
+        });
+      },
 
       _defineGradient: function() {
         if (this.hasUndefinedArguments(arguments)) {
@@ -200,19 +248,27 @@
             this.rect.remove();
           }
           // update axis extents
-          this.dataExtents = this._calcExtents();
-          const width = this.width - this.margin.right;
+          // this.dataExtents = this._calcExtents();
+          const exts = this.chartExtents || this.dataExtents;
+          // const width = this._axisMargin.right - this.margin.right;
           const height = this.height - this.margin.bottom - this.margin.top;
+          const xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth() + this.gapSize;
+          // xOffset maybe invalid if the x function is being updated
+          if (xOffset !== 0 && !xOffset) {
+            return;
+          }
           this.rect = this.svg.append('rect')
-            .attr('width', width)
+            .attr('width', this.legendWidth)
             .attr('height', height)
             .style('fill', 'url(#gradient)')
             // gradient draws top to bottom, so we need to flip it to match the scale which is bottom to top
-            .attr('transform', 'rotate(180, ' + (width / 2) + ', ' + (height / 2) + ')');
+            .attr('transform', 'translate(' + xOffset + ') '
+              + 'rotate(180, ' + (this.legendWidth / 2) + ', ' + (height / 2) + ') ');
         }.bind(this), this.drawDebounceTime);
       },
 
       _calcExtents: function() {
+        // x and y don't matter, only care about the value
         const exts = {
           x: [0, 1],
           y: [0, 1]
