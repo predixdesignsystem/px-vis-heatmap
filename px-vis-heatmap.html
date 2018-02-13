@@ -288,7 +288,7 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        this.debounce('draw', () => {
+        this.debounce('chart-drawn-debounce', () => {
           this.canvasContext.clearRect(0, 0, this.width, this.height);
           this.chartData.forEach((d) => {
             this.canvasContext.beginPath();
@@ -307,7 +307,7 @@
             }
           });
           // fire rendered event
-          this.fire('draw', {
+          this.fire('chart-drawn', {
             heatmap: this
           });
         }, this.drawDebounceTime);
