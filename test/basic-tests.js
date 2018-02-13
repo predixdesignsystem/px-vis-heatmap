@@ -103,7 +103,7 @@ document.addEventListener('WebComponentsReady', () => {
       expect(chart !== undefined).to.be.eql(true);
       // TODO 128x128 was too much
       chart.chartData = generateChartData(64, 64);
-      chart.colors = ['red', 'green', 'blue'];
+      chart.colors = ['red', 'green', 'blue', 'purple'];
 
       waitDrawUpdate(chart, () => {
         done();
