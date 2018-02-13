@@ -18,6 +18,7 @@
         PxVisBehavior.completeSeriesConfig,
         PxVisBehavior.svgDefinition,
         PxVisBehaviorD3.axes,
+        PxVisBehaviorD3.canvasContext,
         PxVisBehaviorD3.domainUpdate
       ],
 
@@ -122,7 +123,7 @@
       },
 
       observers: [
-        '_draw(data, showCellValue, svg, x, y, domainChanged, completeSeriesConfig, seriesKey, colorScale)',
+        '_draw(data, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, colorScale)',
         '_updateColors(fillColor, strokeColor)'
       ],
 
@@ -165,8 +166,24 @@
           return;
         }
         this.debounce('drawDebounce', function() {
-          this._drawDebounced();
+          if (this.svg) {
+            this._drawDebounced();
+          } else if (this.canvasContext) {
+            this._drawDebouncedCanvas();
+          }
         }, this.drawDebounceTime);
+      },
+
+      _drawDebouncedCanvas: function() {
+        // calc colors
+        const fillColor = this.fillColor || this._calcCellColor(this._getValue('value'));
+        // draw
+        this.canvasContext.beginPath();
+        this.canvasContext.rect(this.x(this._getValue('x')),
+          this.y(this._getValue('y')), this.x.bandwidth(), this.y.bandwidth());
+        this.canvasContext.fillStyle = fillColor;
+        this.canvasContext.fill();
+        this.canvasContext.closePath();
       },
 
       /**

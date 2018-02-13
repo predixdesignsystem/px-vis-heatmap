@@ -1,12 +1,13 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../px-vis/px-vis-scale.html">
-<link rel="import" href="../px-vis/px-vis-svg.html">
+<link rel="import" href="../px-vis/px-vis-svg-canvas.html">
 <link rel="import" href="../px-vis/px-vis-axis.html">
 <link rel="import" href="../px-tooltip/px-tooltip.html">
 
 <link rel="import" href="../px-vis/px-vis-behavior-colors.html">
 <link rel="import" href="../px-vis/px-vis-behavior-common.html">
 <link rel="import" href="../px-vis/px-vis-behavior-chart.html">
+<link rel="import" href="../px-vis/px-vis-behavior-d3.html">
 
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
@@ -16,12 +17,13 @@
 
 <dom-module id="px-vis-heatmap">
   <template>
-    <px-vis-svg
+    <px-vis-svg-canvas
       width="[[width]]"
       height="[[height]]"
       margin="[[margin]]"
-      svg="{{svg}}">
-    </px-vis-svg>
+      svg="{{svg}}"
+      canvas-context="{{canvasContext}}">
+    </px-vis-svg-canvas>
     <px-vis-scale
       id="scale"
       x-axis-type="[[xAxisType]]"
@@ -73,12 +75,13 @@
       domain-changed="[[domainChanged]]">
     </px-vis-axis>
     <!-- heatmap cells -->
-    <template is="dom-repeat" items="[[chartData]]">
+    <!-- to use svg, remove canvas-context and add svg="[[svg]]" -->
+    <!-- <template is="dom-repeat" items="[[chartData]]">
       <px-vis-heatmap-cell restamp
         data="[[item]]"
         show-cell-value="[[showCellValue]]"
         color-scale="[[_colorScale]]"
-        svg="[[svg]]"
+        canvas-context="[[canvasContext]]"
         x="[[x]]"
         y="[[y]]"
         series-key="[[seriesKey]]"
@@ -88,7 +91,7 @@
         on-mouseout="_handleCellMouseout"
         on-click="_handleCellClick">
       </px-vis-heatmap-cell>
-    </template>
+    </template> -->
 
     <px-vis-heatmap-legend
       id="legend"
@@ -126,6 +129,7 @@
         PxVisBehavior.margins,
         PxVisBehavior.observerCheck,
         PxVisBehavior.updateStylesOverride,
+        PxVisBehaviorD3.canvasContext,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
         PxVisBehaviorChart.layers,
@@ -249,6 +253,7 @@
       },
 
       observers: [
+        '_drawCells(chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale)',
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
@@ -256,7 +261,7 @@
         '_yAxisConfigChanged(yAxisConfig)',
         '_legendConfigChanged(legendConfig)',
         '_updateSeriesKey(seriesKey)',
-        '_updateColorScale(chartData.*, colors, domainChanged)'
+        '_updateColorScale(chartData.*, colors.*, domainChanged)'
       ],
 
       listeners: {
@@ -268,6 +273,29 @@
         this.xAxisType = 'scaleBand';
         this.yAxisType = 'scaleBand';
         this.tooltipContent = this.$.tooltip.querySelector('#tooltipContent');
+      },
+
+      _drawCells: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.canvasContext.clearRect(0, 0, this.width, this.height);
+        this.chartData.forEach((d) => {
+          this.canvasContext.beginPath();
+          this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
+          this.canvasContext.fillStyle = this._colorScale(d.value);
+          this.canvasContext.fill();
+          // draw value if needed
+          if (this.showCellValue) {
+            const xPos = this.x(d.x) + this.x.bandwidth() / 2;
+            const yPos = this.y(d.y) + this.y.bandwidth() / 2;
+            this.canvasContext.beginPath();
+            this.canvasContext.font = '12px Arial';
+            this.canvasContext.fillStyle = 'black';
+            this.canvasContext.textAlign = 'center';
+            this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
+          }
+        });
       },
 
       _updateDataExtents: function() {
@@ -397,6 +425,7 @@
         if (!this.colors || this.colors.length < 1) {
           return;
         }
+        // get chart min and max values
         const exts = this.chartExtents || this.dataExtents;
         if (!exts.value) {
           return;
