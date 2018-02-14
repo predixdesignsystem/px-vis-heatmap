@@ -393,7 +393,12 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        const cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
+        let cells;
+        if (this.shadowRoot) {
+          cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
+        } else {
+          cells = Polymer.dom(this.root).querySelectorAll('px-vis-heatmap-cell');
+        }
         cells.forEach((cell) => cell.seriesKey = this.seriesKey);
       },
 
