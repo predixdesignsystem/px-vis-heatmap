@@ -37,5 +37,8 @@
         "stylelint-config-vaadin": "^0.1.1",
         "stream-combiner2": "^1.1.1",
         "yargs": "^6.0.0"
+    },
+    "dependencies": {
+        "web-component-tester": "^6.5.0"
     }
 }
