@@ -12,11 +12,14 @@
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
 
-<link rel="import" href="../px-vis/css/px-vis-styles.html">
+<!-- <link rel="import" href="../px-vis/css/px-vis-styles.html"> -->
+<link rel="import" href="css/px-vis-heatmap-styles.html">
 
 
 <dom-module id="px-vis-heatmap">
   <template>
+    <style include="px-vis-heatmap-styles"></style>
+
     <px-vis-svg-canvas
       width="[[width]]"
       height="[[height]]"
