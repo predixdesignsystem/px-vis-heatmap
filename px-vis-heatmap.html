@@ -270,7 +270,7 @@
       },
 
       observers: [
-        '_drawCells(chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale)',
+        '_drawCells(margin, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale)',
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
@@ -420,25 +420,6 @@
 
       _colorsSet: function() {
         this.set('_colorsAreSet', true);
-      },
-
-      _getLegendMargin: function() {
-        if (this.hasUndefinedArguments(arguments)) {
-          return {
-            'top': 0,
-            'right': 50,
-            'bottom': 0,
-            'left': 0
-          };
-        }
-        // TODO: compute real height of xAxis
-        const xAxisHeight = 20;
-        return {
-          'top': 10,
-          'right': 50,
-          'bottom': 50 + xAxisHeight,
-          'left': 0
-        };
       },
 
       _updateColorScale: function() {
