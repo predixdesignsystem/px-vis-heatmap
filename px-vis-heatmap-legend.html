@@ -30,12 +30,12 @@
     <px-vis-axis
       id="yAxis"
       svg="[[svg]]"
-      axis="[[_axisY]]"
+      axis="[[_axisScale]]"
       axis-type="linear"
       margin="[[_axisMargin]]"
       width="[[width]]"
       height="[[height]]"
-      orientation="right"
+      orientation="[[_axisOrientation]]"
       label-position="center"
       prevent-series-bar
       complete-series-config="[[completeSeriesConfig]]"
@@ -69,6 +69,17 @@
          */
         colorScale: {
           type: Object
+        },
+
+        /**
+         * Position and direction of the legend.
+         *
+         * 'right': positioned vertically on the right of the chart.
+         * 'bottom': positioned horizontally below the chart.
+         */
+        orientation: {
+          type: String,
+          value: 'right'
         },
 
         /**
@@ -152,11 +163,20 @@
           }
         },
 
+        _axisOrientation: {
+          type: String,
+          value: 'right'
+        },
+
         _axisY: {
           type: Function
         },
 
         _axisX: {
+          type: Function
+        },
+
+        _axisScale: {
           type: Function
         },
 
@@ -167,38 +187,34 @@
 
         _axisExtents: {
           type: Object
+        },
+
+        /**
+         * svg rect object used to show gradient.
+         */
+        _rect: {
+          type: Object
+        },
+
+        /**
+         * Svg definition for gradient.
+         */
+        _gradientDef: {
+          type: Object
         }
 
       },
 
       observers: [
         '_defineGradient(colorScale)',
-        '_drawRectangle(width, height, legendWidth, _axisMargin.*, domainChanged)',
+        '_updateRectangePosition(_rect, orientation, width, gapSize, margin.*, domainChanged)',
+        '_drawRectangle(orientation, width, height, legendWidth, domainChanged)',
         '_yAxisConfigChanged(yAxisConfig)',
-        '_updateAxisMargin(width, height, legendWidth, gapSize, margin.*, x, y, domainChanged)',
-        '_updateAxisExtents(_axisDomainChanged, _axisX, _axisY, colorScale)'
+        '_updateAxisScale(orientation, _axisX, _axisY)',
+        '_updateAxisMargin(orientation, width, height, legendWidth, gapSize, margin.*, x, y, domainChanged)',
+        '_updateAxisExtents(_axisDomainChanged, _axisX, _axisY, colorScale)',
+        '_updateAxisOrientation(orienation)'
       ],
-
-      _updateAxisExtents: function() {
-        if (this.hasUndefinedArguments(arguments)) {
-          return;
-        }
-        this.set('_axisExtents', this._calcExtents());
-      },
-
-      _updateAxisMargin: function() {
-        if (this.hasUndefinedArguments(arguments)) {
-          return;
-        }
-        let right = this.margin.right - this.legendWidth - this.gapSize;
-        right = right >= 0 ? right : 0;
-        this.set('_axisMargin', {
-          right: right,
-          left: this.margin.left,
-          top: this.margin.top,
-          bottom: this.margin.bottom
-        });
-      },
 
       _defineGradient: function() {
         if (this.hasUndefinedArguments(arguments)) {
@@ -207,15 +223,15 @@
 
         this.debounce('define-gradient', function() {
           // remove old gradient and drawing
-          if (this.legend) {
-            this.legend.remove();
+          if (this._gradientDef) {
+            this._gradientDef.remove();
           }
           // calculate new gradient
           const valueThresholds = this.colorScale.domain();
           const valueRange = valueThresholds[valueThresholds.length - 1] - valueThresholds[0];
           const colors = this.colorScale.range();
           // define gradient for our legend drawing to use
-          this.legend = this.svg.append('defs').append('svg:linearGradient')
+          this._gradientDef = this.svg.append('defs').append('svg:linearGradient')
             .attr('id', 'gradient')
             .attr('x1', '100%')
             .attr('y1', '0%')
@@ -229,7 +245,7 @@
             percentage += (valueThresholds[i] - lastThreshold) / valueRange * 100;
             lastThreshold = valueThresholds[i];
             // use percentage to draw current color into gradient
-            this.legend.append('stop')
+            this._gradientDef.append('stop')
               .attr('offset', percentage + '%')
               .attr('stop-color', color)
               .attr('stop-opacity', 1);
@@ -244,39 +260,104 @@
 
         this.debounce('draw-rectangle', function() {
           // remove old rectangle element
-          if (this.rect) {
-            this.rect.remove();
+          if (this._rect) {
+            this._rect.remove();
           }
-          // update axis extents
-          // this.dataExtents = this._calcExtents();
+          let height;
+          if (this.orientation === 'bottom') {
+            height = this.width - this.margin.left - this.margin.right;
+          } else {
+            height = this.height - this.margin.bottom - this.margin.top;
+          }
+          this._rect = this.svg.append('rect')
+            .attr('width', this.legendWidth)
+            .attr('height', height)
+            .style('fill', 'url(#gradient)');
+        }.bind(this), this.drawDebounceTime);
+      },
+
+      _updateRectangePosition: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.debounce('update-position', function() {
           const exts = this.chartExtents || this.dataExtents;
-          // const width = this._axisMargin.right - this.margin.right;
-          const height = this.height - this.margin.bottom - this.margin.top;
-          const xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth() + this.gapSize;
+          let height;
+          let xOffset;
+          let yOffset;
+          let rotate;
+          if (this.orientation === 'bottom') {
+            // setup vertical rectange then rotate it and position it on bottom
+            height = this.width - this.margin.left - this.margin.right;
+            xOffset = 0;
+            yOffset = this.height - this.margin.top - this.margin.bottom + (this.legendWidth / 2) + this.gapSize;
+            // rotate so rectange sits flush in top left corner
+            rotate = 'rotate(270, ' + (this.legendWidth / 2) + ', ' + (this.legendWidth / 2) + ') ';
+          } else {
+            height = this.height - this.margin.bottom - this.margin.top;
+            xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth() + this.gapSize;
+            yOffset = 0;
+            rotate = 'rotate(180, ' + (this.legendWidth / 2) + ', ' + (height / 2) + ') ';
+          }
           // xOffset maybe invalid if the x function is being updated
           if (xOffset !== 0 && !xOffset) {
             return;
           }
-          this.rect = this.svg.append('rect')
-            .attr('width', this.legendWidth)
-            .attr('height', height)
-            .style('fill', 'url(#gradient)')
-            // gradient draws top to bottom, so we need to flip it to match the scale which is bottom to top
-            .attr('transform', 'translate(' + xOffset + ') '
-              + 'rotate(180, ' + (this.legendWidth / 2) + ', ' + (height / 2) + ') ');
-        }.bind(this), this.drawDebounceTime);
+          const translate = 'translate(' + xOffset + ', ' + yOffset + ') ';
+          this._rect.attr('transform', translate + rotate);
+        }.bind(this), 100);
+      },
+
+      _updateAxisScale: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.set('_axisScale', this.orientation === 'bottom' ? this._axisX : this._axisY);
+      },
+
+      _updateAxisExtents: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.set('_axisExtents', this._calcExtents());
+      },
+
+      _updateAxisMargin: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.set('_axisOrientation', this.orientation);
+        const margin = {
+          right: this.margin.right,
+          left: this.margin.left,
+          top: this.margin.top,
+          bottom: this.margin.bottom
+        };
+        if (this._axisOrientation === 'bottom') {
+          // TODO: figure out height of x-axis on main heatmap
+          let bottom = this.legendWidth + 25;
+          bottom = bottom >= 0 ? bottom : 0;
+          margin.bottom = bottom;
+        } else {
+          let right = this.margin.right - this.legendWidth - this.gapSize;
+          right = right >= 0 ? right : 0;
+          margin.right = right;
+        }
+        this.set('_axisMargin', margin);
+      },
+
+      _updateAxisOrientation: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
       },
 
       _calcExtents: function() {
-        // x and y don't matter, only care about the value
+        const values = this.colorScale.domain();
         const exts = {
-          x: [0, 1],
-          y: [0, 1]
+          x: [values[0], values[values.length - 1]],
+          y: [values[0], values[values.length - 1]]
         };
-        if (this.colorScale) {
-          const values = this.colorScale.domain();
-          exts.y = [values[0], values[values.length - 1]];
-        }
         return exts;
       },
 

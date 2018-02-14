@@ -47,7 +47,7 @@
         <px-vis-heatmap
           width="[[props.width.value]]"
           height="[[props.height.value]]"
-          margin="[[props.margin.value]]"
+          margin="{{props.margin.value}}"
           chart-data="{{props.chartData.value}}"
           chart-extents="{{props.chartExtents.value}}"
           colors="[[props.colors.value]]"
@@ -57,12 +57,17 @@
           show-cell-value="[[props.showCellValue.value]]"
           x-axis-config="[[props.xAxisConfig.value]]"
           y-axis-config="[[props.yAxisConfig.value]]"
-          tooltip-delay="[[props.tooltipDelay.value]]">
+          tooltip-delay="[[props.tooltipDelay.value]]"
+          legend-config="{{props.legendConfig.value}}">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
           <input id="ySize" placeholder="Y Size" />
           <button on-click="_generateRandomData">Generate Data</button>
+        </div>
+        <div>
+          <button on-click="_desktopMode">Desktop Mode</button>
+          <button on-click="_mobileMode">Mobile Mode</button>
         </div>
       </px-demo-component>
       <!-- END Component ------------------------------------------------------>
@@ -245,6 +250,14 @@
         defaultValue: true
       },
 
+      legendConfig: {
+        type: Object,
+        inputType: 'code:JSON',
+        defaultValue: {
+          orientation: 'right'
+        }
+      },
+
       tooltipDelay: {
         type: Number,
         inputType: 'number',
@@ -274,7 +287,7 @@
     },
 
     _generateRandomData: function() {
-      const chart = this.shadowRoot.querySelector('px-vis-heatmap');
+      const chart = this._getChart();
       const xSize = Number.parseInt(this.$.xSize.value);
       const ySize = Number.parseInt(this.$.ySize.value);
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
@@ -314,6 +327,42 @@
         exts.y.push(i);
       }
       return exts;
+    },
+
+    _desktopMode: function() {
+      const chart = this._getChart();
+      chart.set('margin', {
+        top: chart.margin.top,
+        right: 120,
+        bottom: 70,
+        left: chart.margin.left
+      });
+      chart.set('legendConfig', {
+        orientation: 'right'
+      });
+    },
+
+    _mobileMode: function() {
+      const chart = this._getChart();
+      chart.set('margin', {
+        top: chart.margin.top,
+        right: 10,
+        bottom: 170,
+        left: chart.margin.left
+      });
+      chart.set('legendConfig', {
+        orientation: 'bottom'
+      });
+    },
+
+    _getChart: function() {
+      let chart;
+      if (this.shadowRoot) {
+        chart = this.shadowRoot.querySelector('px-vis-heatmap');
+      } else {
+        chart = Polymer.dom(this.root).querySelector('px-vis-heatmap');
+      }
+      return chart;
     }
 
   });
