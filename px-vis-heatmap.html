@@ -12,11 +12,14 @@
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
 
-<link rel="import" href="../px-vis/css/px-vis-styles.html">
+<!-- <link rel="import" href="../px-vis/css/px-vis-styles.html"> -->
+<link rel="import" href="css/px-vis-heatmap-styles.html">
 
 
 <dom-module id="px-vis-heatmap">
   <template>
+    <style include="px-vis-heatmap-styles"></style>
+
     <px-vis-svg-canvas
       width="[[width]]"
       height="[[height]]"
@@ -393,7 +396,12 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        const cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
+        let cells;
+        if (this.shadowRoot) {
+          cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
+        } else {
+          cells = Polymer.dom(this.root).querySelectorAll('px-vis-heatmap-cell');
+        }
         cells.forEach((cell) => cell.seriesKey = this.seriesKey);
       },
 

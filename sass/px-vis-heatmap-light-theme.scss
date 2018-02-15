@@ -1,0 +1,12 @@
+/**
+ * CSS variables for Predix Light Theme
+ */
+
+ @import "px-colors-design/_settings.colors.scss";
+
+
+ html {
+   // axis
+   --px-vis-axis-color: $gray10;
+   --px-vis-axis-title-color: $gray10;
+ }

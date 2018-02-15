@@ -277,35 +277,34 @@
       },
 
       _updateRectangePosition: function() {
-        if (this.hasUndefinedArguments(arguments)) {
+        const exts = this.chartExtents || this.dataExtents;
+        if (!exts || this.hasUndefinedArguments(arguments)) {
           return;
         }
-        this.debounce('update-position', function() {
-          const exts = this.chartExtents || this.dataExtents;
-          let height;
-          let xOffset;
-          let yOffset;
-          let rotate;
-          if (this.orientation === 'bottom') {
-            // setup vertical rectange then rotate it and position it on bottom
-            height = this.width - this.margin.left - this.margin.right;
-            xOffset = 0;
-            yOffset = this.height - this.margin.top - this.margin.bottom + (this.legendWidth / 2) + this.gapSize;
-            // rotate so rectange sits flush in top left corner
-            rotate = 'rotate(270, ' + (this.legendWidth / 2) + ', ' + (this.legendWidth / 2) + ') ';
-          } else {
-            height = this.height - this.margin.bottom - this.margin.top;
-            xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth() + this.gapSize;
-            yOffset = 0;
-            rotate = 'rotate(180, ' + (this.legendWidth / 2) + ', ' + (height / 2) + ') ';
-          }
-          // xOffset maybe invalid if the x function is being updated
-          if (xOffset !== 0 && !xOffset) {
-            return;
-          }
-          const translate = 'translate(' + xOffset + ', ' + yOffset + ') ';
-          this._rect.attr('transform', translate + rotate);
-        }.bind(this), 100);
+
+        let height;
+        let xOffset;
+        let yOffset;
+        let rotate;
+        if (this.orientation === 'bottom') {
+          // setup vertical rectange then rotate it and position it on bottom
+          height = this.width - this.margin.left - this.margin.right;
+          xOffset = 0;
+          yOffset = this.height - this.margin.top - this.margin.bottom + (this.legendWidth / 2) + this.gapSize;
+          // rotate so rectange sits flush in top left corner
+          rotate = 'rotate(270, ' + (this.legendWidth / 2) + ', ' + (this.legendWidth / 2) + ') ';
+        } else {
+          height = this.height - this.margin.bottom - this.margin.top;
+          xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth() + this.gapSize;
+          yOffset = 0;
+          rotate = 'rotate(180, ' + (this.legendWidth / 2) + ', ' + (height / 2) + ') ';
+        }
+        // xOffset maybe invalid if the x function is being updated
+        if (xOffset !== 0 && !xOffset) {
+          return;
+        }
+        const translate = 'translate(' + xOffset + ', ' + yOffset + ') ';
+        this._rect.attr('transform', translate + rotate);
       },
 
       _updateAxisScale: function() {

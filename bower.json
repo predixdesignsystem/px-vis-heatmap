@@ -28,6 +28,8 @@
   },
   "devDependencies": {
     "px-theme": "^3.0.0",
+    "px-dark-theme": "^2.1.0",
+    "px-dark-demo-theme": "^2.1.0",
     "px-defaults-design": "^2.0.0",
     "px-normalize-design": "^1.0.0",
     "px-box-sizing-design": "^1.0.0",
@@ -43,7 +45,7 @@
     "promise-polyfill": "^2.0.0"
   },
   "variants": {
-    "1.x":{
+    "1.x": {
       "dependencies": {
         "polymer": "^1.9.0"
       },
@@ -52,6 +54,11 @@
       },
       "resolutions": {
         "webcomponentsjs": "^0.7.24"
+      }
+    },
+    "2.x": {
+      "dependencies": {
+        "polymer": "^2.4.0-rc.1"
       }
     }
   }

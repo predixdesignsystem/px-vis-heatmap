@@ -98,7 +98,11 @@
 
     ready: function() {
       // TODO: remove - using for easier dev
-      window.chart = this.shadowRoot.querySelector('px-vis-heatmap');
+      if (this.shadowRoot) {
+        window.chart = this.shadowRoot.querySelector('px-vis-heatmap');
+      } else {
+        window.chart = Polymer.dom(this.root).querySelector('px-vis-heatmap');
+      }
     },
 
     properties: {
