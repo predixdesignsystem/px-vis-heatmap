@@ -20,6 +20,11 @@
   <template>
     <style include="px-vis-heatmap-styles"></style>
 
+    <!-- Media query to determine if context browser should collapse -->
+    <template is="dom-if" if="[[_collapseQueryIsValid(collapseAt)]]">
+      <iron-media-query query$="(max-width: {{_getCollapseQuery(collapseAt)}})" query-matches="{{collapsed}}"></iron-media-query>
+    </template>
+
     <px-vis-svg-canvas
       width="[[width]]"
       height="[[height]]"
@@ -109,6 +114,7 @@
       color-scale="[[_colorScale]]"
       chart-extents="[[chartExtents]]"
       data-extents="[[dataExtents]]"
+      orientation="[[_legendOrientation]]"
       complete-series-config="[[completeSeriesConfig]]"
       domain-changed="[[domainChanged]]">
     </px-vis-heatmap-legend>
@@ -257,6 +263,29 @@
           value: 100
         },
 
+        /**
+        * The width below which the context browser will collapse into a mobile
+        * friendly menu that slides up from the bottom of the page. Use a number
+        * (e.g. `450`) which will be converted to a pixel value (e.g. '450px').
+        *
+        * If no value is provided, the context browser will not collapse
+        * automatically. The collapsed attribute can also be used to manually
+        * collapse and un-collapse the context browser.
+        */
+        collapseAt: {
+          type: Number
+        },
+
+        /**
+        * Watch for changes to determine if the context browser is collapsed.
+        */
+        collapsed: {
+          type: Boolean,
+          observer: '_collapsedChanged',
+          reflectToAttribute: true,
+          notify: true
+        },
+
         _cellData: {
           type: Array
         },
@@ -268,6 +297,10 @@
 
         _colorScale: {
           type: Function
+        },
+
+        _legendOrientation: {
+          type: String
         }
 
       },
@@ -293,6 +326,29 @@
         this.xAxisType = 'scaleBand';
         this.yAxisType = 'scaleBand';
         this.tooltipContent = this.$.tooltip.querySelector('#tooltipContent');
+      },
+
+      _collapseQueryIsValid(query) {
+        if (typeof query === 'number') {
+          return true;
+        }
+        if (typeof query === 'string' && query.slice(-2) === 'px' && !isNaN(parseInt(query))) {
+          return true;
+        }
+        return false;
+      },
+
+      _getCollapseQuery(collapseAt) {
+        if (typeof collapseAt === 'number') {
+          return collapseAt + 'px';
+        }
+        if (typeof collapseAt === 'string' && collapseAt.slice(-2) === 'px' || !isNaN(parseInt(collapseAt))) {
+          return collapseAt;
+        }
+      },
+
+      _collapsedChanged() {
+        this.set('_legendOrientation', this.collapsed ? 'bottom' : 'right');
       },
 
       _drawCells: function() {
