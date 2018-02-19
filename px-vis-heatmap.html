@@ -25,99 +25,109 @@
       <iron-media-query query$="(max-width: {{_getCollapseQuery(collapseAt)}})" query-matches="{{collapsed}}"></iron-media-query>
     </template>
 
-    <px-vis-svg-canvas
-      width="[[_internalWidth]]"
-      height="[[_internalHeight]]"
-      margin="[[margin]]"
-      svg="{{svg}}"
-      canvas-context="{{canvasContext}}">
-    </px-vis-svg-canvas>
-    <px-vis-scale
-      id="scale"
-      x-axis-type="[[xAxisType]]"
-      y-axis-type="[[yAxisType]]"
-      complete-series-config="[[completeSeriesConfig]]"
-      chart-extents="[[chartExtents]]"
-      data-extents="[[dataExtents]]"
-      width="[[_internalWidth]]"
-      height="[[_internalHeight]]"
-      margin="[[margin]]"
-      chart-data="[[chartData]]"
-      x="{{x}}"
-      y="{{y}}"
-      scale-padding="[[scalePadding]]"
-      domain-changed="{{domainChanged}}">
-    </px-vis-scale>
-    <!-- y axis -->
-    <px-vis-axis
-      id="yAxis"
-      svg="[[layer.1]]"
-      axis="[[y]]"
-      axis-type="[[yAxisType]]"
-      margin="[[margin]]"
-      width="[[_internalWidth]]"
-      height="[[_internalHeight]]"
-      title="Y Axis"
-      orientation="left"
-      label-position="center"
-      tick-size-inner="0"
-      prevent-series-bar
-      complete-series-config="[[completeSeriesConfig]]"
-      muted-series=[[mutedSeries]]
-      domain-changed="[[domainChanged]]">
-    </px-vis-axis>
-    <!-- x axis -->
-    <px-vis-axis
-      id="xAxis"
-      svg="[[layer.1]]"
-      axis="[[x]]"
-      axis-type="[[xAxisType]]"
-      margin="[[margin]]"
-      width="[[_internalWidth]]"
-      height="[[_internalHeight]]"
-      title="X Axis"
-      orientation="bottom"
-      label-position="center"
-      tick-size-inner="0"
-      prevent-series-bar
-      complete-series-config="[[completeSeriesConfig]]"
-      muted-series=[[mutedSeries]]
-      domain-changed="[[domainChanged]]">
-    </px-vis-axis>
-    <!-- heatmap cells -->
-    <!-- to use svg, remove canvas-context and add svg="[[svg]]" -->
-    <!-- <template is="dom-repeat" items="[[chartData]]">
-      <px-vis-heatmap-cell restamp
-        data="[[item]]"
-        show-cell-value="[[showCellValue]]"
-        color-scale="[[_colorScale]]"
-        canvas-context="[[canvasContext]]"
+    <div id="wrapper" class$="{{_chartWrapperClass}}">
+
+      <px-vis-svg-canvas
+        width="[[_internalWidth]]"
+        height="[[_internalHeight]]"
+        margin="[[margin]]"
+        svg="{{svg}}"
+        canvas-context="{{canvasContext}}">
+      </px-vis-svg-canvas>
+      <px-vis-scale
+        id="scale"
+        x-axis-type="[[xAxisType]]"
+        y-axis-type="[[yAxisType]]"
+        complete-series-config="[[completeSeriesConfig]]"
+        chart-extents="[[chartExtents]]"
+        data-extents="[[dataExtents]]"
+        width="[[_internalWidth]]"
+        height="[[_internalHeight]]"
+        margin="[[margin]]"
+        chart-data="[[chartData]]"
+        x="{{x}}"
+        y="{{y}}"
+        scale-padding="[[scalePadding]]"
+        domain-changed="{{domainChanged}}">
+      </px-vis-scale>
+      <!-- y axis -->
+      <px-vis-axis
+        id="yAxis"
+        svg="[[layer.1]]"
+        axis="[[y]]"
+        axis-type="[[yAxisType]]"
+        margin="[[margin]]"
+        width="[[_internalWidth]]"
+        height="[[_internalHeight]]"
+        title="Y Axis"
+        orientation="left"
+        label-position="center"
+        tick-size-inner="0"
+        prevent-series-bar
+        complete-series-config="[[completeSeriesConfig]]"
+        muted-series=[[mutedSeries]]
+        domain-changed="[[domainChanged]]">
+      </px-vis-axis>
+      <!-- x axis -->
+      <px-vis-axis
+        id="xAxis"
+        svg="[[layer.1]]"
+        axis="[[x]]"
+        axis-type="[[xAxisType]]"
+        margin="[[margin]]"
+        width="[[_internalWidth]]"
+        height="[[_internalHeight]]"
+        title="X Axis"
+        orientation="bottom"
+        label-position="center"
+        tick-size-inner="0"
+        prevent-series-bar
+        complete-series-config="[[completeSeriesConfig]]"
+        muted-series=[[mutedSeries]]
+        domain-changed="[[domainChanged]]">
+      </px-vis-axis>
+      <!-- heatmap cells -->
+      <!-- to use svg, remove canvas-context and add svg="[[svg]]" -->
+      <!-- <template is="dom-repeat" items="[[chartData]]">
+        <px-vis-heatmap-cell restamp
+          data="[[item]]"
+          show-cell-value="[[showCellValue]]"
+          color-scale="[[_colorScale]]"
+          canvas-context="[[canvasContext]]"
+          x="[[x]]"
+          y="[[y]]"
+          margin="[[margin]]"
+          width="[[width]]"
+          height="[[height]]"
+          color-scale="[[_colorScale]]"
+          chart-extents="[[chartExtents]]"
+          data-extents="[[dataExtents]]"
+          orientation="[[_legendOrientation]]"
+          complete-series-config="[[completeSeriesConfig]]"
+          domain-changed="[[domainChanged]]"
+          on-mouseover="_handleCellMouseover"
+          on-mouseout="_handleCellMouseout"
+          on-click="_handleCellClick">
+        </px-vis-heatmap-cell>
+      </template> -->
+
+      <px-vis-heatmap-legend
+        id="legend"
+        svg="[[svg]]"
         x="[[x]]"
         y="[[y]]"
-        series-key="[[seriesKey]]"
+        margin="[[margin]]"
+        width="[[_internalWidth]]"
+        height="[[_internalHeight]]"
+        color-scale="[[_colorScale]]"
+        chart-extents="[[chartExtents]]"
+        data-extents="[[dataExtents]]"
+        orientation="[[_legendOrientation]]"
         complete-series-config="[[completeSeriesConfig]]"
-        domain-changed="[[domainChanged]]"
-        on-mouseover="_handleCellMouseover"
-        on-mouseout="_handleCellMouseout"
-        on-click="_handleCellClick">
-      </px-vis-heatmap-cell>
-    </template> -->
+        domain-changed="[[domainChanged]]">
+      </px-vis-heatmap-legend>
 
-    <px-vis-heatmap-legend
-      id="legend"
-      svg="[[svg]]"
-      x="[[x]]"
-      y="[[y]]"
-      margin="[[margin]]"
-      width="[[_internalWidth]]"
-      height="[[_internalHeight]]"
-      color-scale="[[_colorScale]]"
-      chart-extents="[[chartExtents]]"
-      data-extents="[[dataExtents]]"
-      orientation="[[_legendOrientation]]"
-      complete-series-config="[[completeSeriesConfig]]"
-      domain-changed="[[domainChanged]]">
-    </px-vis-heatmap-legend>
+    </div><!-- /wrapper -->
 
     <!-- tooltip -->
     <px-tooltip
@@ -149,6 +159,7 @@
         PxVisBehaviorD3.canvasContext,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
+        PxVisBehaviorChart.chartAutoResize,
         PxVisBehaviorChart.layers,
         PxVisBehaviorChart.subConfiguration
       ],
@@ -336,7 +347,8 @@
       ],
 
       listeners: {
-        'px-data-vis-colors-applied': '_colorsSet'
+        'px-data-vis-colors-applied': '_colorsSet',
+        'iron-resize': '_onIronResize'
       },
 
       ready: function() {
@@ -396,6 +408,18 @@
             heatmap: this
           });
         }, this.drawDebounceTime);
+      },
+
+      _onIronResize: function() {
+        this.debounce('ironresize', function() {
+          // make sure we are not preventing resize in case it changed while debouncing
+          if (this.preventResize) {
+            return;
+          }
+          const wrapperRect = this.$.wrapper.getBoundingClientRect();
+          this.set('width', wrapperRect.width);
+          this.set('height', wrapperRect.height);
+        }, this.debounceResizeTiming);
       },
 
       _updateDataExtents: function() {
