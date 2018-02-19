@@ -58,16 +58,14 @@
           x-axis-config="[[props.xAxisConfig.value]]"
           y-axis-config="[[props.yAxisConfig.value]]"
           tooltip-delay="[[props.tooltipDelay.value]]"
-          legend-config="{{props.legendConfig.value}}">
+          legend-config="{{props.legendConfig.value}}"
+          collapse-at="{{props.collapseAt.value}}"
+          on-collapsed-changed="_collapsedChanged">
         </px-vis-heatmap>
         <div>
           <input id="xSize" placeholder="X Size" />
           <input id="ySize" placeholder="Y Size" />
           <button on-click="_generateRandomData">Generate Data</button>
-        </div>
-        <div>
-          <button on-click="_desktopMode">Desktop Mode</button>
-          <button on-click="_mobileMode">Mobile Mode</button>
         </div>
       </px-demo-component>
       <!-- END Component ------------------------------------------------------>
@@ -254,6 +252,12 @@
         defaultValue: true
       },
 
+      collapseAt: {
+        type: Number,
+        inputType: 'number',
+        defaultValue: 720
+      },
+
       legendConfig: {
         type: Object,
         inputType: 'code:JSON',
@@ -333,32 +337,6 @@
       return exts;
     },
 
-    _desktopMode: function() {
-      const chart = this._getChart();
-      chart.set('margin', {
-        top: chart.margin.top,
-        right: 120,
-        bottom: 70,
-        left: chart.margin.left
-      });
-      chart.set('legendConfig', {
-        orientation: 'right'
-      });
-    },
-
-    _mobileMode: function() {
-      const chart = this._getChart();
-      chart.set('margin', {
-        top: chart.margin.top,
-        right: 10,
-        bottom: 170,
-        left: chart.margin.left
-      });
-      chart.set('legendConfig', {
-        orientation: 'bottom'
-      });
-    },
-
     _getChart: function() {
       let chart;
       if (this.shadowRoot) {
@@ -367,6 +345,25 @@
         chart = Polymer.dom(this.root).querySelector('px-vis-heatmap');
       }
       return chart;
+    },
+
+    _collapsedChanged: function(e, details) {
+      const chart = this._getChart();
+      if (details.value) {
+        chart.set('margin', {
+          top: chart.margin.top,
+          right: 10,
+          bottom: 170,
+          left: chart.margin.left
+        });
+      } else {
+        chart.set('margin', {
+          top: chart.margin.top,
+          right: 120,
+          bottom: 70,
+          left: chart.margin.left
+        });
+      }
     }
 
   });
