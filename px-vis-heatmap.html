@@ -26,8 +26,8 @@
     </template>
 
     <px-vis-svg-canvas
-      width="[[width]]"
-      height="[[height]]"
+      width="[[_internalWidth]]"
+      height="[[_internalHeight]]"
       margin="[[margin]]"
       svg="{{svg}}"
       canvas-context="{{canvasContext}}">
@@ -39,8 +39,8 @@
       complete-series-config="[[completeSeriesConfig]]"
       chart-extents="[[chartExtents]]"
       data-extents="[[dataExtents]]"
-      width="[[width]]"
-      height="[[height]]"
+      width="[[_internalWidth]]"
+      height="[[_internalHeight]]"
       margin="[[margin]]"
       chart-data="[[chartData]]"
       x="{{x}}"
@@ -55,8 +55,8 @@
       axis="[[y]]"
       axis-type="[[yAxisType]]"
       margin="[[margin]]"
-      width="[[width]]"
-      height="[[height]]"
+      width="[[_internalWidth]]"
+      height="[[_internalHeight]]"
       title="Y Axis"
       orientation="left"
       label-position="center"
@@ -73,8 +73,8 @@
       axis="[[x]]"
       axis-type="[[xAxisType]]"
       margin="[[margin]]"
-      width="[[width]]"
-      height="[[height]]"
+      width="[[_internalWidth]]"
+      height="[[_internalHeight]]"
       title="X Axis"
       orientation="bottom"
       label-position="center"
@@ -109,8 +109,8 @@
       x="[[x]]"
       y="[[y]]"
       margin="[[margin]]"
-      width="[[width]]"
-      height="[[height]]"
+      width="[[_internalWidth]]"
+      height="[[_internalHeight]]"
       color-scale="[[_colorScale]]"
       chart-extents="[[chartExtents]]"
       data-extents="[[dataExtents]]"
@@ -202,6 +202,15 @@
               'left': 50
             };
           }
+        },
+
+        /**
+         * If true, the heatmap will always show cells as squares. The shortest
+         * of the x and y axis will be used for the length.
+         */
+        squareMode: {
+          type: Boolean,
+          value: false
         },
 
         /**
@@ -301,6 +310,14 @@
 
         _legendOrientation: {
           type: String
+        },
+
+        _internalWidth: {
+          type: Number
+        },
+
+        _internalHeight: {
+          type: Number
         }
 
       },
@@ -314,7 +331,8 @@
         '_yAxisConfigChanged(yAxisConfig)',
         '_legendConfigChanged(legendConfig)',
         '_updateSeriesKey(seriesKey)',
-        '_updateColorScale(chartData.*, colors.*, domainChanged)'
+        '_updateColorScale(chartData.*, colors.*, domainChanged)',
+        '_updateInternalWidth(squareMode, width, height, margin.*)'
       ],
 
       listeners: {
@@ -509,6 +527,42 @@
         this.set('_colorScale', Px.d3.scaleLinear()
           .domain(valueThresholds)
           .range(this.colors));
+      },
+
+      _updateInternalWidth: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.set('_internalWidth', this._getInternalWidth());
+        this.set('_internalHeight', this._getInternalHeight());
+      },
+
+      _getInternalWidth: function() {
+        let width = this.width;
+        // in squareMode we need the both axis to be equal length
+        if (this.squareMode) {
+          const axisWidth = this.width - this.margin.left - this.margin.right;
+          const axisHeight = this.height - this.margin.top - this.margin.bottom;
+          // if the width is too large, subtract the difference to make them equal
+          if (axisWidth > axisHeight) {
+            width -= (axisWidth - axisHeight);
+          }
+        }
+        return width;
+      },
+
+      _getInternalHeight: function() {
+        let height = this.height;
+        // in squareMode we need the both axis to be equal length
+        if (this.squareMode) {
+          const axisWidth = this.width - this.margin.left - this.margin.right;
+          const axisHeight = this.height - this.margin.top - this.margin.bottom;
+          // if the width is too large, subtract the difference to make them equal
+          if (axisHeight > axisWidth) {
+            height -= (axisHeight - axisWidth);
+          }
+        }
+        return height;
       },
 
       _handleCellMouseover: function(e, details) {

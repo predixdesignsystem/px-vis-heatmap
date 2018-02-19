@@ -50,6 +50,7 @@
           margin="{{props.margin.value}}"
           chart-data="{{props.chartData.value}}"
           chart-extents="{{props.chartExtents.value}}"
+          square-mode="{{props.squareMode.value}}"
           colors="[[props.colors.value]]"
           series-config="[[props.seriesConfig.value]]"
           scale-padding="[[props.scalePadding.value]]"
@@ -126,6 +127,19 @@
      * A reference for `this.props`. Read the documentation there.
      */
     demoProps: {
+
+      squareMode: {
+        type: Boolean,
+        inputType: 'toggle',
+        defaultValue: true
+      },
+
+      showCellValue: {
+        type: Boolean,
+        inputType: 'toggle',
+        defaultValue: false
+      },
+
       width: {
         type: Number,
         inputType: 'number',
@@ -244,12 +258,6 @@
         type: Number,
         inputType: 'number',
         defaultValue: 0
-      },
-
-      showCellValue: {
-        type: Boolean,
-        inputType: 'toggle',
-        defaultValue: true
       },
 
       collapseAt: {
