@@ -25,7 +25,7 @@
       <iron-media-query query$="(max-width: {{_getCollapseQuery(collapseAt)}})" query-matches="{{collapsed}}"></iron-media-query>
     </template>
 
-    <div id="wrapper" class="[[_getChartWrapperClass()]]">
+    <div id="wrapper" class$="{{_chartWrapperClass}}">
 
       <px-vis-svg-canvas
         width="[[_internalWidth]]"
