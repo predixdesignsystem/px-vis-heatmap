@@ -25,7 +25,15 @@
       <iron-media-query query$="(max-width: {{_getCollapseQuery(collapseAt)}})" query-matches="{{collapsed}}"></iron-media-query>
     </template>
 
-    <div id="wrapper" class$="{{_chartWrapperClass}}">
+    <!--
+      TODO: use _chartWrapperClass
+
+      Using _chartWrapperClass is causing weird positioning when preventResize
+      is set to false. It could have something to do with the demo page.
+
+      <div id="wrapper" class$="{{_chartWrapperClass}}">
+    -->
+    <div id="wrapper" class="flex wrapper">
 
       <px-vis-svg-canvas
         width="[[_internalWidth]]"
@@ -343,7 +351,7 @@
         '_legendConfigChanged(legendConfig)',
         '_updateSeriesKey(seriesKey)',
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
-        '_updateInternalWidth(squareMode, width, height, margin.*)'
+        '_updateInternalSize(squareMode, width, height, margin.*)'
       ],
 
       listeners: {
@@ -553,7 +561,7 @@
           .range(this.colors));
       },
 
-      _updateInternalWidth: function() {
+      _updateInternalSize: function() {
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
