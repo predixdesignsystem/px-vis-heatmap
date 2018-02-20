@@ -6,7 +6,7 @@
 
 html {
   // axis
-  --px-vis-axis-color: $gray10;
+  --px-vis-axis-color: $gray5;
   --px-vis-axis-title-color: $gray5;
 
   // tooltip
@@ -19,6 +19,9 @@ html {
   --px-vis-heatmap-cell-border-width: 1px;
   --px-vis-heatmap-cell-text-color: $gray2;
   --px-vis-heatmap-cell-text-size: 12px;
+  --px-vis-heatmap-colors-0: $aqua4;
+  --px-vis-heatmap-colors-1: $green4;
+  --px-vis-heatmap-colors-2: $yellow4;
 
   // heatmap legend
   --px-vis-heatmap-legend-border-color: $gray15;

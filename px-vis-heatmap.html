@@ -265,13 +265,7 @@
          * Colors to use for the heatmap.
          */
         colors: {
-          type: Array,
-          value: function() {
-            return [
-              'lightblue',
-              'blue'
-            ];
-          }
+          type: Array
         },
 
         /**
@@ -354,6 +348,10 @@
         _colorsAreSet: {
           type: Boolean,
           value: false
+        },
+
+        _internalColors: {
+          type: Array
         },
 
         _colorScale: {
@@ -726,14 +724,16 @@
           const seriesConfig = this.completeSeriesConfig || {};
           const config = seriesConfig[this.seriesKey] || {};
           // resolve all css vars
-          this.cellBorderColor = config.cellBorderColor
-            || this._checkThemeVariable('--px-vis-heatmap-cell-border-color', '#FFF');
-          this.cellBorderWidth = config.cellBorderWidth
-            || this._checkThemeVariable('--px-vis-heatmap-cell-border-width', '0');
-          this.cellTextColor = config.cellTextColor
-            || this._checkThemeVariable('--px-vis-heatmap-cell-text-color', '#000');
-          this.cellTextSize = config.cellTextSize
-            || this._checkThemeVariable('--px-vis-heatmap-cell-text-size', '12px');
+          this.set('cellBorderColor', config.cellBorderColor
+            || this._checkThemeVariable('--px-vis-heatmap-cell-border-color', '#FFF'));
+          this.set('cellBorderWidth', config.cellBorderWidth
+            || this._checkThemeVariable('--px-vis-heatmap-cell-border-width', '0'));
+          this.set('cellTextColor', config.cellTextColor
+            || this._checkThemeVariable('--px-vis-heatmap-cell-text-color', '#000'));
+          this.set('cellTextSize', config.cellTextSize
+            || this._checkThemeVariable('--px-vis-heatmap-cell-text-size', '12px'));
+          this.set('colors', config.colors
+            || this._checkThemeColors('--px-vis-heatmap-colors-', ['lightblue', 'blue']));
           // notify children
           this.$.xAxis.updateStyles();
           this.$.yAxis.updateStyles();
@@ -744,6 +744,23 @@
           // notify that style vars have changed
           this.set('_stylesResolved', !this._stylesResolved);
         }.bind(this), 10);
+      },
+
+      _checkThemeColors: function(rulePrefix, defaultColors) {
+        let colors = [];
+        let color = 'none';
+        let i = 0;
+        while (color !== undefined) {
+          color = this._checkThemeVariable(rulePrefix + i);
+          if (color !== undefined) {
+            colors.push(color);
+          }
+          i++;
+        }
+        if (!colors || colors.length < 1) {
+          colors = defaultColors;
+        }
+        return colors;
       },
 
       _colorsSet: function() {

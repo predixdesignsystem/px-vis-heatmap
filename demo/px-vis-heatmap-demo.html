@@ -55,7 +55,6 @@
               chart-data="{{props.chartData.value}}"
               chart-extents="{{props.chartExtents.value}}"
               square-mode="{{props.squareMode.value}}"
-              colors="{{props.colors.value}}"
               series-config="{{props.seriesConfig.value}}"
               scale-padding="{{props.scalePadding.value}}"
               padding-outer="{{props.paddingOuter.value}}"
@@ -245,16 +244,6 @@
           y: ['Cat 1', 'Cat 2', 'Cat 3'],
           value: [0, 100]
         }
-      },
-
-      colors: {
-        type: Array,
-        inputType: 'code:JSON',
-        defaultValue: [
-          'blue',
-          'violet',
-          'red'
-        ]
       },
 
       seriesConfig: {
