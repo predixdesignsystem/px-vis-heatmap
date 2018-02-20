@@ -49,8 +49,8 @@
             <px-vis-heatmap
               prevent-resize="{{props.preventResize.value}}"
               debounce-resize-timing="{{props.debounceResizeTiming.value}}"
-              width="[[props.width.value]]"
-              height="[[props.height.value]]"
+              width="{{props.width.value}}"
+              height="{{props.height.value}}"
               margin="{{props.margin.value}}"
               chart-data="{{props.chartData.value}}"
               chart-extents="{{props.chartExtents.value}}"
@@ -330,11 +330,6 @@
     _preventResizeChanged: function() {
       this.set('props.width.inputDisabled', !this.props.preventResize.value);
       this.set('props.height.inputDisabled', !this.props.preventResize.value);
-      // force chart to resize back to normal by faking a width/height change
-      if (this.props.preventResize.value) {
-        this.set('props.width.value', this.props.width.value + ' ');
-        this.set('props.height.value', this.props.height.value + ' ');
-      }
     },
 
     _generateRandomData: function() {
