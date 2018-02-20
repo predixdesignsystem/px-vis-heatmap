@@ -394,7 +394,7 @@
           return;
         }
         this.debounce('chart-drawn-debounce', () => {
-          this.canvasContext.clearRect(0, 0, this.width, this.height);
+          this.canvasContext.pxClearCanvas();
           this.chartData.forEach((d) => {
             this.canvasContext.beginPath();
             this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
@@ -408,6 +408,7 @@
               this.canvasContext.font = '12px Arial';
               this.canvasContext.fillStyle = 'black';
               this.canvasContext.textAlign = 'center';
+              this.canvasContext.textBaseline = 'middle';
               this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
             }
           });
