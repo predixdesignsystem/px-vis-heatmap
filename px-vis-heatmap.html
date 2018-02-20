@@ -319,6 +319,34 @@
           notify: true
         },
 
+        /**
+         * Color of cell border. Set by series config object or css var.
+         */
+        cellBorderColor: {
+          type: String
+        },
+
+        /**
+         * Width of cell border. Set by series config object or css var.
+         */
+        cellBorderWidth: {
+          type: String
+        },
+
+        /**
+         * Color of text used for cell value. Set by series config object or css var.
+         */
+        cellTextColor: {
+          type: String
+        },
+
+        /**
+         * Size of text used for cell value. Set by series config object or css var.
+         */
+        cellTextSize: {
+          type: String
+        },
+
         _cellData: {
           type: Array
         },
@@ -356,7 +384,8 @@
         '_updateInternalSize(squareMode, width, height, margin.*)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
-        '_legendConfigChanged(legendConfig)'
+        '_legendConfigChanged(legendConfig)',
+        '_resolveCssVars(_stylesUpdated)'
       ],
 
       listeners: {
@@ -670,6 +699,25 @@
         // use parseFloat to be safe of XSS
         msg += cell._getValue('value');
         return msg;
+      },
+
+      _resolveCssVars: function() {
+        // get series config obj
+        const seriesConfig = this.completeSeriesConfig || {};
+        const config = seriesConfig[this.seriesKey] || {};
+        // resolve all css vars
+        this.cellBorderColor = config.cellBorderColor
+          || this._checkThemeVariable('--px-vis-heatmap-cell-border-color', '#FFF');
+        this.cellBorderWidth = config.cellBorderWidth
+          || this._checkThemeVariable('--px-vis-heatmap-cell-border-width', '0');
+        this.cellTextColor = config.cellTextColor
+          || this._checkThemeVariable('--px-vis-heatmap-cell-text-color', '#000');
+        this.cellTextSize = config.cellTextSize
+          || this._checkThemeVariable('--px-vis-heatmap-cell-text-size', '12px');
+        // notify children
+        this.$.xAxis.updateStyles();
+        this.$.yAxis.updateStyles();
+
       },
 
       _colorsSet: function() {
