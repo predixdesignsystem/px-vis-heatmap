@@ -370,12 +370,20 @@
 
         _internalHeight: {
           type: Number
+        },
+
+        /**
+         * Observe changes to this in order to know when css vars have changed.
+         */
+        _stylesResolved: {
+          type: Boolean,
+          value: false
         }
 
       },
 
       observers: [
-        '_drawCells(margin, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale)',
+        '_drawCells(margin, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale, _stylesResolved)',
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
@@ -411,13 +419,16 @@
             this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
             this.canvasContext.fillStyle = this._colorScale(d.value);
             this.canvasContext.fill();
+            this.canvasContext.strokeStyle = this.cellBorderColor;
+            this.canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
+            this.canvasContext.stroke();
             // draw value if needed
             if (this.showCellValue) {
               const xPos = this.x(d.x) + this.x.bandwidth() / 2;
               const yPos = this.y(d.y) + this.y.bandwidth() / 2;
               this.canvasContext.beginPath();
-              this.canvasContext.font = '12px Arial';
-              this.canvasContext.fillStyle = 'black';
+              this.canvasContext.font = this.cellTextSize + ' Arial';
+              this.canvasContext.fillStyle = this.cellTextColor;
               this.canvasContext.textAlign = 'center';
               this.canvasContext.textBaseline = 'middle';
               this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
@@ -710,25 +721,29 @@
       },
 
       _resolveCssVars: function() {
-        // get series config obj
-        const seriesConfig = this.completeSeriesConfig || {};
-        const config = seriesConfig[this.seriesKey] || {};
-        // resolve all css vars
-        this.cellBorderColor = config.cellBorderColor
-          || this._checkThemeVariable('--px-vis-heatmap-cell-border-color', '#FFF');
-        this.cellBorderWidth = config.cellBorderWidth
-          || this._checkThemeVariable('--px-vis-heatmap-cell-border-width', '0');
-        this.cellTextColor = config.cellTextColor
-          || this._checkThemeVariable('--px-vis-heatmap-cell-text-color', '#000');
-        this.cellTextSize = config.cellTextSize
-          || this._checkThemeVariable('--px-vis-heatmap-cell-text-size', '12px');
-        // notify children
-        this.$.xAxis.updateStyles();
-        this.$.yAxis.updateStyles();
-        const legend = this._getLegend();
-        if (legend) {
-          legend.updateStyles();
-        }
+        this.debounce('resolve-css-vars', function() {
+          // get series config obj
+          const seriesConfig = this.completeSeriesConfig || {};
+          const config = seriesConfig[this.seriesKey] || {};
+          // resolve all css vars
+          this.cellBorderColor = config.cellBorderColor
+            || this._checkThemeVariable('--px-vis-heatmap-cell-border-color', '#FFF');
+          this.cellBorderWidth = config.cellBorderWidth
+            || this._checkThemeVariable('--px-vis-heatmap-cell-border-width', '0');
+          this.cellTextColor = config.cellTextColor
+            || this._checkThemeVariable('--px-vis-heatmap-cell-text-color', '#000');
+          this.cellTextSize = config.cellTextSize
+            || this._checkThemeVariable('--px-vis-heatmap-cell-text-size', '12px');
+          // notify children
+          this.$.xAxis.updateStyles();
+          this.$.yAxis.updateStyles();
+          const legend = this._getLegend();
+          if (legend) {
+            legend.updateStyles();
+          }
+          // notify that style vars have changed
+          this.set('_stylesResolved', !this._stylesResolved);
+        }.bind(this), 10);
       },
 
       _colorsSet: function() {
