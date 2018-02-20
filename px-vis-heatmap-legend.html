@@ -59,6 +59,7 @@
         PxVisBehavior.margins,
         PxVisBehavior.observerCheck,
         PxVisBehavior.svgDefinition,
+        PxVisBehavior.updateStylesOverride,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
         PxVisBehaviorChart.subConfiguration
@@ -135,6 +136,20 @@
         },
 
         /**
+         * Color of border surrounding legend. Set by series config or css var.
+         */
+        borderColor: {
+          type: String
+        },
+
+        /**
+         * Width of border surrounding legend. Set by series config or css var.
+         */
+        borderWidth: {
+          type: String
+        },
+
+        /**
         * This component doesn't use chartData, but some px-vis
         * comps require a valid chart data object.
         */
@@ -203,19 +218,28 @@
          */
         _gradientDef: {
           type: Object
+        },
+
+        /**
+         * Observe changes to this in order to know when css vars have changed.
+         */
+        _stylesResolved: {
+          type: Boolean,
+          value: false
         }
 
       },
 
       observers: [
-        '_defineGradient(colorScale)',
-        '_updateRectangePosition(_rect, orientation, width, gapSize, margin.*, domainChanged)',
-        '_drawRectangle(orientation, width, height, legendWidth, domainChanged)',
+        '_defineGradient(colorScale, _stylesResolved)',
+        '_updateRectangePosition(_rect, orientation, width, gapSize, margin.*, domainChanged, _stylesResolved)',
+        '_drawRectangle(orientation, width, height, legendWidth, domainChanged, _stylesResolved)',
         '_yAxisConfigChanged(yAxisConfig)',
         '_updateAxisScale(orientation, _axisX, _axisY)',
         '_updateAxisMargin(orientation, width, height, legendWidth, gapSize, margin.*, x, y, domainChanged)',
         '_updateAxisExtents(_axisDomainChanged, _axisX, _axisY, colorScale)',
-        '_updateAxisOrientation(orienation)'
+        '_updateAxisOrientation(orienation)',
+        '_resolveCssVars(_stylesUpdated)'
       ],
 
       detached: function() {
@@ -284,6 +308,8 @@
           this._rect = this.svg.append('rect')
             .attr('width', this.legendWidth)
             .attr('height', height)
+            .attr('stroke', this.borderColor)
+            .attr('stroke-width', this.borderWidth)
             .style('fill', 'url(#gradient)');
         }.bind(this), this.drawDebounceTime);
       },
@@ -377,6 +403,23 @@
           return;
         }
         this._applyConfigToElement(yAxisConfig, this.$.yAxis);
+      },
+
+      _resolveCssVars: function() {
+        this.debounce('resolve-css-vars', function() {
+          // get series config obj
+          const seriesConfig = this.completeSeriesConfig || {};
+          const config = seriesConfig[this.seriesKey] || {};
+          // resolve all css vars
+          this.borderColor = config.legendBorderColor
+            || this._checkThemeVariable('--px-vis-heatmap-legend-border-color', '#FFF');
+          this.borderWidth = config.legendBorderWidth
+            || this._checkThemeVariable('--px-vis-heatmap-legend-border-width', '0');
+          // notify children
+          this.$.yAxis.updateStyles();
+          // notify that style vars have changed
+          this.set('_stylesResolved', !this._stylesResolved);
+        }.bind(this), 10);
       }
 
     });

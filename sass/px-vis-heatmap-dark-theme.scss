@@ -2,10 +2,28 @@
  * CSS variables for Predix Light Theme
  */
 
- @import "px-colors-design/_settings.colors.scss";
+@import "px-colors-design/_settings.colors.scss";
 
- html {
-   // axis
-   --px-vis-axis-color: $gray10;
-   --px-vis-axis-title-color: $gray5;
- }
+html {
+  // axis
+  --px-vis-axis-color: $gray5;
+  --px-vis-axis-title-color: $gray5;
+
+  // tooltip
+  --px-tooltip-text-color: $gray5;
+  --px-tooltip-background-color: $gray16;
+  --px-tooltip-border-color: $gray19;
+
+  // heatmap
+  --px-vis-heatmap-cell-border-color: $gray15;
+  --px-vis-heatmap-cell-border-width: 1px;
+  --px-vis-heatmap-cell-text-color: $gray2;
+  --px-vis-heatmap-cell-text-size: 12px;
+  --px-vis-heatmap-colors-0: $aqua4;
+  --px-vis-heatmap-colors-1: $green4;
+  --px-vis-heatmap-colors-2: $yellow4;
+
+  // heatmap legend
+  --px-vis-heatmap-legend-border-color: $gray15;
+  --px-vis-heatmap-legend-border-width: 1px;
+}

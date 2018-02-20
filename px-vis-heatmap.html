@@ -265,13 +265,7 @@
          * Colors to use for the heatmap.
          */
         colors: {
-          type: Array,
-          value: function() {
-            return [
-              'lightblue',
-              'blue'
-            ];
-          }
+          type: Array
         },
 
         /**
@@ -319,6 +313,34 @@
           notify: true
         },
 
+        /**
+         * Color of cell border. Set by series config object or css var.
+         */
+        cellBorderColor: {
+          type: String
+        },
+
+        /**
+         * Width of cell border. Set by series config object or css var.
+         */
+        cellBorderWidth: {
+          type: String
+        },
+
+        /**
+         * Color of text used for cell value. Set by series config object or css var.
+         */
+        cellTextColor: {
+          type: String
+        },
+
+        /**
+         * Size of text used for cell value. Set by series config object or css var.
+         */
+        cellTextSize: {
+          type: String
+        },
+
         _cellData: {
           type: Array
         },
@@ -326,6 +348,10 @@
         _colorsAreSet: {
           type: Boolean,
           value: false
+        },
+
+        _internalColors: {
+          type: Array
         },
 
         _colorScale: {
@@ -342,12 +368,20 @@
 
         _internalHeight: {
           type: Number
+        },
+
+        /**
+         * Observe changes to this in order to know when css vars have changed.
+         */
+        _stylesResolved: {
+          type: Boolean,
+          value: false
         }
 
       },
 
       observers: [
-        '_drawCells(margin, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale)',
+        '_drawCells(margin, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale, _stylesResolved)',
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
@@ -356,7 +390,8 @@
         '_updateInternalSize(squareMode, width, height, margin.*)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
-        '_legendConfigChanged(legendConfig)'
+        '_legendConfigChanged(legendConfig)',
+        '_resolveCssVars(_stylesUpdated)'
       ],
 
       listeners: {
@@ -382,13 +417,16 @@
             this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
             this.canvasContext.fillStyle = this._colorScale(d.value);
             this.canvasContext.fill();
+            this.canvasContext.strokeStyle = this.cellBorderColor;
+            this.canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
+            this.canvasContext.stroke();
             // draw value if needed
             if (this.showCellValue) {
               const xPos = this.x(d.x) + this.x.bandwidth() / 2;
               const yPos = this.y(d.y) + this.y.bandwidth() / 2;
               this.canvasContext.beginPath();
-              this.canvasContext.font = '12px Arial';
-              this.canvasContext.fillStyle = 'black';
+              this.canvasContext.font = this.cellTextSize + ' Arial';
+              this.canvasContext.fillStyle = this.cellTextColor;
               this.canvasContext.textAlign = 'center';
               this.canvasContext.textBaseline = 'middle';
               this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
@@ -610,6 +648,14 @@
         }.bind(this), 10);
       },
 
+      _getLegend: function() {
+        if (this.shadowRoot) {
+          return this.shadowRoot.querySelector('px-vis-heatmap-legend');
+        } else {
+          return Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
+        }
+      },
+
       _handleCellMouseover: function(e, details) {
         // show over cell value if available, otherwise over entire cell
         const el = details.cell.getSvgTextElement() || details.cell.getSvgElement();
@@ -670,6 +716,51 @@
         // use parseFloat to be safe of XSS
         msg += cell._getValue('value');
         return msg;
+      },
+
+      _resolveCssVars: function() {
+        this.debounce('resolve-css-vars', function() {
+          // get series config obj
+          const seriesConfig = this.completeSeriesConfig || {};
+          const config = seriesConfig[this.seriesKey] || {};
+          // resolve all css vars
+          this.set('cellBorderColor', config.cellBorderColor
+            || this._checkThemeVariable('--px-vis-heatmap-cell-border-color', '#FFF'));
+          this.set('cellBorderWidth', config.cellBorderWidth
+            || this._checkThemeVariable('--px-vis-heatmap-cell-border-width', '0'));
+          this.set('cellTextColor', config.cellTextColor
+            || this._checkThemeVariable('--px-vis-heatmap-cell-text-color', '#000'));
+          this.set('cellTextSize', config.cellTextSize
+            || this._checkThemeVariable('--px-vis-heatmap-cell-text-size', '12px'));
+          this.set('colors', config.colors
+            || this._checkThemeColors('--px-vis-heatmap-colors-', ['lightblue', 'blue']));
+          // notify children
+          this.$.xAxis.updateStyles();
+          this.$.yAxis.updateStyles();
+          const legend = this._getLegend();
+          if (legend) {
+            legend.updateStyles();
+          }
+          // notify that style vars have changed
+          this.set('_stylesResolved', !this._stylesResolved);
+        }.bind(this), 10);
+      },
+
+      _checkThemeColors: function(rulePrefix, defaultColors) {
+        let colors = [];
+        let color = 'none';
+        let i = 0;
+        while (color !== undefined) {
+          color = this._checkThemeVariable(rulePrefix + i);
+          if (color !== undefined) {
+            colors.push(color);
+          }
+          i++;
+        }
+        if (!colors || colors.length < 1) {
+          colors = defaultColors;
+        }
+        return colors;
       },
 
       _colorsSet: function() {
