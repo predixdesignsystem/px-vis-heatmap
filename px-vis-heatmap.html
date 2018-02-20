@@ -425,8 +425,24 @@
             return;
           }
           const wrapperRect = this.$.wrapper.getBoundingClientRect();
-          this.set('width', wrapperRect.width);
-          this.set('height', wrapperRect.height);
+
+          // resize but keep cell proportions
+
+          // calc axis lengths
+          const axis = {
+            width: this.width - this.margin.left - this.margin.right,
+            height: this.height - this.margin.top - this.margin.bottom
+          };
+          // calculate new axis lengths
+          const newAxis = {
+            width: wrapperRect.width - this.margin.left - this.margin.right,
+            height: wrapperRect.height - this.margin.top - this.margin.bottom
+          };
+          // use whatever the minimum is in order to stay inside our frame
+          const changePercentage = Math.min(newAxis.width / axis.width, newAxis.height / axis.height);
+          // apply percentage to both height and width
+          this.set('width', (axis.width * changePercentage) + this.margin.left + this.margin.right);
+          this.set('height', (axis.height * changePercentage) + this.margin.top + this.margin.bottom);
         }, this.debounceResizeTiming);
       },
 
