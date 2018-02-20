@@ -639,6 +639,14 @@
         }.bind(this), 10);
       },
 
+      _getLegend: function() {
+        if (this.shadowRoot) {
+          return this.shadowRoot.querySelector('px-vis-heatmap-legend');
+        } else {
+          return Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
+        }
+      },
+
       _handleCellMouseover: function(e, details) {
         // show over cell value if available, otherwise over entire cell
         const el = details.cell.getSvgTextElement() || details.cell.getSvgElement();
@@ -717,7 +725,10 @@
         // notify children
         this.$.xAxis.updateStyles();
         this.$.yAxis.updateStyles();
-
+        const legend = this._getLegend();
+        if (legend) {
+          legend.updateStyles();
+        }
       },
 
       _colorsSet: function() {

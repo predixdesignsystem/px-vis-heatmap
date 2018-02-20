@@ -135,6 +135,20 @@
         },
 
         /**
+         * Color of border surrounding legend. Set by series config or css var.
+         */
+        borderColor: {
+          type: String
+        },
+
+        /**
+         * Width of border surrounding legend. Set by series config or css var.
+         */
+        borderWidth: {
+          type: String
+        },
+
+        /**
         * This component doesn't use chartData, but some px-vis
         * comps require a valid chart data object.
         */
@@ -215,7 +229,8 @@
         '_updateAxisScale(orientation, _axisX, _axisY)',
         '_updateAxisMargin(orientation, width, height, legendWidth, gapSize, margin.*, x, y, domainChanged)',
         '_updateAxisExtents(_axisDomainChanged, _axisX, _axisY, colorScale)',
-        '_updateAxisOrientation(orienation)'
+        '_updateAxisOrientation(orienation)',
+        '_resolveCssVars(_stylesUpdated)'
       ],
 
       detached: function() {
@@ -377,6 +392,19 @@
           return;
         }
         this._applyConfigToElement(yAxisConfig, this.$.yAxis);
+      },
+
+      _resolveCssVars: function() {
+        // get series config obj
+        const seriesConfig = this.completeSeriesConfig || {};
+        const config = seriesConfig[this.seriesKey] || {};
+        // resolve all css vars
+        this.borderColor = config.cellBorderColor
+          || this._checkThemeVariable('--px-vis-heatmap-legend-border-color', '#FFF');
+        this.borderWidth = config.cellBorderWidth
+          || this._checkThemeVariable('--px-vis-heatmap-legend-border-width', '0');
+        // notify children
+        this.$.yAxis.updateStyles();
       }
 
     });
