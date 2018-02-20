@@ -59,6 +59,7 @@
         PxVisBehavior.margins,
         PxVisBehavior.observerCheck,
         PxVisBehavior.svgDefinition,
+        PxVisBehavior.updateStylesOverride,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
         PxVisBehaviorChart.subConfiguration
@@ -217,14 +218,22 @@
          */
         _gradientDef: {
           type: Object
+        },
+
+        /**
+         * Observe changes to this in order to know when css vars have changed.
+         */
+        _stylesResolved: {
+          type: Boolean,
+          value: false
         }
 
       },
 
       observers: [
-        '_defineGradient(colorScale)',
-        '_updateRectangePosition(_rect, orientation, width, gapSize, margin.*, domainChanged)',
-        '_drawRectangle(orientation, width, height, legendWidth, domainChanged)',
+        '_defineGradient(colorScale, _stylesResolved)',
+        '_updateRectangePosition(_rect, orientation, width, gapSize, margin.*, domainChanged, _stylesResolved)',
+        '_drawRectangle(orientation, width, height, legendWidth, domainChanged, _stylesResolved)',
         '_yAxisConfigChanged(yAxisConfig)',
         '_updateAxisScale(orientation, _axisX, _axisY)',
         '_updateAxisMargin(orientation, width, height, legendWidth, gapSize, margin.*, x, y, domainChanged)',
@@ -299,6 +308,8 @@
           this._rect = this.svg.append('rect')
             .attr('width', this.legendWidth)
             .attr('height', height)
+            .attr('stroke', this.borderColor)
+            .attr('stroke-width', this.borderWidth)
             .style('fill', 'url(#gradient)');
         }.bind(this), this.drawDebounceTime);
       },
@@ -395,16 +406,20 @@
       },
 
       _resolveCssVars: function() {
-        // get series config obj
-        const seriesConfig = this.completeSeriesConfig || {};
-        const config = seriesConfig[this.seriesKey] || {};
-        // resolve all css vars
-        this.borderColor = config.cellBorderColor
-          || this._checkThemeVariable('--px-vis-heatmap-legend-border-color', '#FFF');
-        this.borderWidth = config.cellBorderWidth
-          || this._checkThemeVariable('--px-vis-heatmap-legend-border-width', '0');
-        // notify children
-        this.$.yAxis.updateStyles();
+        this.debounce('resolve-css-vars', function() {
+          // get series config obj
+          const seriesConfig = this.completeSeriesConfig || {};
+          const config = seriesConfig[this.seriesKey] || {};
+          // resolve all css vars
+          this.borderColor = config.legendBorderColor
+            || this._checkThemeVariable('--px-vis-heatmap-legend-border-color', '#FFF');
+          this.borderWidth = config.legendBorderWidth
+            || this._checkThemeVariable('--px-vis-heatmap-legend-border-width', '0');
+          // notify children
+          this.$.yAxis.updateStyles();
+          // notify that style vars have changed
+          this.set('_stylesResolved', !this._stylesResolved);
+        }.bind(this), 10);
       }
 
     });
