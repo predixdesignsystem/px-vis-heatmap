@@ -63,6 +63,7 @@
               x-axis-config="{{props.xAxisConfig.value}}"
               y-axis-config="{{props.yAxisConfig.value}}"
               tooltip-delay="{{props.tooltipDelay.value}}"
+              show-legend="{{props.showLegend.value}}"
               legend-config="{{props.legendConfig.value}}"
               collapse-at="{{props.collapseAt.value}}"
               on-collapsed-changed="_collapsedChanged">
@@ -285,6 +286,12 @@
         type: Number,
         inputType: 'number',
         defaultValue: 720
+      },
+
+      showLegend: {
+        type: Boolean,
+        inputType: 'toggle',
+        defaultValue: true
       },
 
       legendConfig: {

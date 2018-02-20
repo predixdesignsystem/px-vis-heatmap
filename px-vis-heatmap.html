@@ -117,21 +117,23 @@
         </px-vis-heatmap-cell>
       </template> -->
 
-      <px-vis-heatmap-legend
-        id="legend"
-        svg="[[svg]]"
-        x="[[x]]"
-        y="[[y]]"
-        margin="[[margin]]"
-        width="[[_internalWidth]]"
-        height="[[_internalHeight]]"
-        color-scale="[[_colorScale]]"
-        chart-extents="[[chartExtents]]"
-        data-extents="[[dataExtents]]"
-        orientation="[[_legendOrientation]]"
-        complete-series-config="[[completeSeriesConfig]]"
-        domain-changed="[[domainChanged]]">
-      </px-vis-heatmap-legend>
+      <template is="dom-if" if="[[showLegend]]" restamp>
+        <px-vis-heatmap-legend
+          id="legend"
+          svg="[[svg]]"
+          x="[[x]]"
+          y="[[y]]"
+          margin="[[margin]]"
+          width="[[_internalWidth]]"
+          height="[[_internalHeight]]"
+          color-scale="[[_colorScale]]"
+          chart-extents="[[chartExtents]]"
+          data-extents="[[dataExtents]]"
+          orientation="[[_legendOrientation]]"
+          complete-series-config="[[completeSeriesConfig]]"
+          domain-changed="[[domainChanged]]">
+        </px-vis-heatmap-legend>
+      </template>
 
     </div><!-- /wrapper -->
 
@@ -228,6 +230,11 @@
         squareMode: {
           type: Boolean,
           value: false
+        },
+
+        showLegend: {
+          type: Boolean,
+          value: true
         },
 
         /**
@@ -589,7 +596,18 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        this._applyConfigToElement(legendConfig, this.$.legend);
+        // debouncing because this gets called before dom-if that instantiates legend happens
+        this.debounce('legend-config-changed', function() {
+          let legend;
+          if (this.shadowRoot) {
+            legend = this.shadowRoot.querySelector('px-vis-heatmap-legend');
+          } else {
+            legend = Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
+          }
+          if (legend) {
+            this._applyConfigToElement(legendConfig, legend);
+          }
+        }.bind(this), 10);
       },
 
       _handleCellMouseover: function(e, details) {

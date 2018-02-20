@@ -53,10 +53,12 @@
         PxVisBehavior.axisTypes,
         PxVisBehavior.baseSize,
         PxVisBehavior.chartExtents,
+        PxVisBehavior.commonMethods,
         PxVisBehavior.completeSeriesConfig,
         PxVisBehavior.dataExtents,
         PxVisBehavior.margins,
         PxVisBehavior.observerCheck,
+        PxVisBehavior.svgDefinition,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
         PxVisBehaviorChart.subConfiguration
@@ -215,6 +217,16 @@
         '_updateAxisExtents(_axisDomainChanged, _axisX, _axisY, colorScale)',
         '_updateAxisOrientation(orienation)'
       ],
+
+      detached: function() {
+        // remove gradient and rectangle drawings
+        if (!this._isObjEmpty(this._gradientDef)) {
+          this._gradientDef.remove();
+        }
+        if (!this._isObjEmpty(this._rect)) {
+          this._rect.remove();
+        }
+      },
 
       _defineGradient: function() {
         if (this.hasUndefinedArguments(arguments)) {
