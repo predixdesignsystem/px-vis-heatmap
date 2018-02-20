@@ -67,7 +67,6 @@
         margin="[[margin]]"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
-        title="Y Axis"
         orientation="left"
         label-position="center"
         tick-size-inner="0"
@@ -85,7 +84,6 @@
         margin="[[margin]]"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
-        title="X Axis"
         orientation="bottom"
         label-position="center"
         tick-size-inner="0"
@@ -346,12 +344,12 @@
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
-        '_xAxisConfigChanged(xAxisConfig)',
-        '_yAxisConfigChanged(yAxisConfig)',
-        '_legendConfigChanged(legendConfig)',
         '_updateSeriesKey(seriesKey)',
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
-        '_updateInternalSize(squareMode, width, height, margin.*)'
+        '_updateInternalSize(squareMode, width, height, margin.*)',
+        '_xAxisConfigChanged(xAxisConfig)',
+        '_yAxisConfigChanged(yAxisConfig)',
+        '_legendConfigChanged(legendConfig)'
       ],
 
       listeners: {
@@ -364,29 +362,6 @@
         this.xAxisType = 'scaleBand';
         this.yAxisType = 'scaleBand';
         this.tooltipContent = this.$.tooltip.querySelector('#tooltipContent');
-      },
-
-      _collapseQueryIsValid(query) {
-        if (typeof query === 'number') {
-          return true;
-        }
-        if (typeof query === 'string' && query.slice(-2) === 'px' && !isNaN(parseInt(query))) {
-          return true;
-        }
-        return false;
-      },
-
-      _getCollapseQuery(collapseAt) {
-        if (typeof collapseAt === 'number') {
-          return collapseAt + 'px';
-        }
-        if (typeof collapseAt === 'string' && collapseAt.slice(-2) === 'px' || !isNaN(parseInt(collapseAt))) {
-          return collapseAt;
-        }
-      },
-
-      _collapsedChanged() {
-        this.set('_legendOrientation', this.collapsed ? 'bottom' : 'right');
       },
 
       _drawCells: function() {
@@ -417,6 +392,29 @@
             heatmap: this
           });
         }, this.drawDebounceTime);
+      },
+
+      _collapseQueryIsValid(query) {
+        if (typeof query === 'number') {
+          return true;
+        }
+        if (typeof query === 'string' && query.slice(-2) === 'px' && !isNaN(parseInt(query))) {
+          return true;
+        }
+        return false;
+      },
+
+      _getCollapseQuery(collapseAt) {
+        if (typeof collapseAt === 'number') {
+          return collapseAt + 'px';
+        }
+        if (typeof collapseAt === 'string' && collapseAt.slice(-2) === 'px' || !isNaN(parseInt(collapseAt))) {
+          return collapseAt;
+        }
+      },
+
+      _collapsedChanged() {
+        this.set('_legendOrientation', this.collapsed ? 'bottom' : 'right');
       },
 
       _onIronResize: function() {
@@ -512,31 +510,6 @@
         cells.forEach((cell) => cell.seriesKey = this.seriesKey);
       },
 
-      _xAxisConfigChanged: function(xAxisConfig) {
-        if (this.hasUndefinedArguments(arguments)) {
-          return;
-        }
-        this._applyConfigToElement(xAxisConfig, this.$.xAxis);
-      },
-
-      _yAxisConfigChanged: function(yAxisConfig) {
-        if (this.hasUndefinedArguments(arguments)) {
-          return;
-        }
-        this._applyConfigToElement(yAxisConfig, this.$.yAxis);
-      },
-
-      _legendConfigChanged: function(legendConfig) {
-        if (this.hasUndefinedArguments(arguments)) {
-          return;
-        }
-        this._applyConfigToElement(legendConfig, this.$.legend);
-      },
-
-      _colorsSet: function() {
-        this.set('_colorsAreSet', true);
-      },
-
       _updateColorScale: function() {
         if (!this.dataExtents && !this.chartExtents) {
           return;
@@ -596,6 +569,27 @@
           }
         }
         return height;
+      },
+
+      _xAxisConfigChanged: function(xAxisConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(xAxisConfig, this.$.xAxis);
+      },
+
+      _yAxisConfigChanged: function(yAxisConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(yAxisConfig, this.$.yAxis);
+      },
+
+      _legendConfigChanged: function(legendConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this._applyConfigToElement(legendConfig, this.$.legend);
       },
 
       _handleCellMouseover: function(e, details) {
@@ -659,6 +653,10 @@
         msg += cell._getValue('value');
         return msg;
       },
+
+      _colorsSet: function() {
+        this.set('_colorsAreSet', true);
+      }
 
     });
   </script>
