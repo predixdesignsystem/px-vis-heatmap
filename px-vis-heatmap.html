@@ -358,7 +358,8 @@
          * chartData array.
          */
         selectedCell: {
-          type: Object
+          type: Object,
+          observer: '_selectedCellChanged'
         },
 
         /**
@@ -415,7 +416,6 @@
         '_updateSeriesKey(seriesKey)',
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
         '_updateInternalSize(squareMode, width, height, margin.*)',
-        '_selectedCellChanged(selectedCell)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
         '_legendConfigChanged(legendConfig)',
@@ -652,17 +652,28 @@
         return height;
       },
 
-      _selectedCellChanged: function() {
+      _selectedCellChanged: function(selectedCell, prevSelectedCell) {
         // clear overlay canvas
         this.overlayCanvasContext.pxClearCanvas();
-        if (this.selectedCell) {
+        if (selectedCell) {
           // lower opacity for entire canvas
           this.canvasContext.canvas.classList.add('primaryDataMask');
           // redraw our selected cell on the top layer canvas
-          this._drawCell(this.overlayCanvasContext, this.selectedCell);
+          this._drawCell(this.overlayCanvasContext, selectedCell);
         } else {
           // remove lowered opacity
           this.canvasContext.canvas.classList.remove('primaryDataMask');
+        }
+        // fire mouseover and mouseout events
+        if (prevSelectedCell) {
+          this.fire('cell-mouseout', {
+            cell: prevSelectedCell
+          });
+        }
+        if (selectedCell) {
+          this.fire('cell-mouseover', {
+            cell: selectedCell
+          });
         }
       },
 

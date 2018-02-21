@@ -66,7 +66,9 @@
               legend-config="{{props.legendConfig.value}}"
               collapse-at="{{props.collapseAt.value}}"
               on-collapsed-changed="_collapsedChanged"
-              on-cell-click="_handleCellClick">
+              on-cell-click="_handleCellClick"
+              on-cell-mouseover="_handleCellMouseover"
+              on-cell-mouseout="_handleCellMouseout">
             </px-vis-heatmap>
           </div>
         </div>
@@ -409,6 +411,16 @@
 
     _handleCellClick: function(e, details) {
       this.set('eventMessage', 'Cell clicked ('
+          + details.cell.x + ', ' + details.cell.y + ') [' + details.cell.value + ']');
+    },
+
+    _handleCellMouseover: function(e, details) {
+      this.set('eventMessage', 'Cell mouseover ('
+          + details.cell.x + ', ' + details.cell.y + ') [' + details.cell.value + ']');
+    },
+
+    _handleCellMouseout: function(e, details) {
+      this.set('eventMessage', 'Cell mouseout ('
           + details.cell.x + ', ' + details.cell.y + ') [' + details.cell.value + ']');
     }
 
