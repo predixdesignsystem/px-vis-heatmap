@@ -45,6 +45,7 @@
     -->
     <div id="wrapper" class="flex wrapper">
 
+      <!-- main svg and canvas -->
       <px-vis-svg-canvas
         class="canvas"
         width="[[_internalWidth]]"
@@ -53,6 +54,7 @@
         svg="{{svg}}"
         canvas-context="{{canvasContext}}">
       </px-vis-svg-canvas>
+      <!-- top layer canvas used for hover effects -->
       <px-vis-canvas
         class="canvas"
         width="[[_internalWidth]]"
@@ -60,6 +62,7 @@
         margin="[[margin]]"
         canvas-context="{{overlayCanvasContext}}">
       </px-vis-svg-canvas>
+      <!-- scale -->
       <px-vis-scale
         id="scale"
         x-axis-type="[[xAxisType]]"
@@ -660,9 +663,13 @@
           this.canvasContext.canvas.classList.add('primaryDataMask');
           // redraw our selected cell on the top layer canvas
           this._drawCell(this.overlayCanvasContext, selectedCell);
+          // show tooltip
+          this._showTooltip(selectedCell, this._createTooltipMessage(selectedCell));
         } else {
           // remove lowered opacity
           this.canvasContext.canvas.classList.remove('primaryDataMask');
+          // hide tooltip
+          this._closeTooltip();
         }
         // fire mouseover and mouseout events
         if (prevSelectedCell) {
@@ -784,33 +791,12 @@
         this._closeTooltip();
       },
 
-      _setHoveredCell: function(hoveredCell, delay) {
-        let cells;
-        // get all cell components
-        if (this.shadowRoot) {
-          cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
-        } else {
-          cells = Polymer.dom(this.root).querySelectorAll('px-vis-heatmap-cell');
-        }
-        // lower opacity for all non-hovered elements
-        this.debounce('opacityTimeout', () => {
-          cells.forEach((cell) => {
-            if (!cell || !cell.getSvgElement()) {
-              return;
-            }
-            if (hoveredCell && hoveredCell !== cell) {
-              // lower opacity
-              cell.getSvgElement().classList.add('primaryDataMask');
-            } else {
-              // set opacity to default
-              cell.getSvgElement().classList.remove('primaryDataMask');
-            }
-          });
-        }, delay);
-      },
-
-      _showTooltip: function(el, msg) {
-        this.$.tooltip.for = el;
+      _showTooltip: function(cell, msg) {
+        // calc x and y position for tooltip
+        const pos = {
+          x: this.x(cell.x),
+          y: this.y(cell.y)
+        };
         this.tooltipContent.innerHTML = msg;
         this.$.tooltip.opened = true;
       },
@@ -821,10 +807,10 @@
 
       _createTooltipMessage: function(cell) {
         let msg = '<h1 style="text-weight:bold;font-size:125%;">';
-        msg += 'Asset ' + cell._getValue('x') + ', ' + cell._getValue('y');
+        msg += 'Asset ' + cell.x + ', ' + cell.y;
         msg += '</h1>';
         // use parseFloat to be safe of XSS
-        msg += cell._getValue('value');
+        msg += cell.value;
         return msg;
       },
 
