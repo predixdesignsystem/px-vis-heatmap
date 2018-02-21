@@ -446,6 +446,7 @@
           // add mouse event handlers - add to overlay canvas because its on the top layer
           this.overlayCanvasContext.canvas.onmousemove = this._handleMouseMove.bind(this);
           this.overlayCanvasContext.canvas.onmouseout = this._handleMouseMove.bind(this);
+          this.overlayCanvasContext.canvas.onclick = this._handleClick.bind(this);
           // fire rendered event
           this.fire('chart-drawn', {
             heatmap: this
@@ -706,6 +707,20 @@
       },
 
       _handleMouseMove: function(e) {
+        this.selectedCell = this._getCellFromMouseEvent(e);
+      },
+
+      _handleClick: function(e) {
+        const cell = this._getCellFromMouseEvent(e);
+        if (cell) {
+          this.fire('cell-click', {
+            cell: cell
+          });
+        }
+      },
+
+      _getCellFromMouseEvent: function(e) {
+        let cell;
         // get canvas coords
         const canvasRect = this.canvasContext.canvas.getBoundingClientRect();
         const mouseX = e.clientX - canvasRect.left - this.margin.left;
@@ -720,13 +735,14 @@
         // make sure mouse is over cell area
         if (mouseX < bounds.left || mouseX > bounds.right
             || mouseY < bounds.top || mouseY > bounds.bottom) {
-          this.selectedCell = undefined;
+          // do nothing
         } else {
           // calculate which cell
           const x = this.x.invert(mouseX);
           const y = this.y.invert(mouseY);
-          this.selectedCell = this._getCellByPosition(x, y);
+          cell = this._getCellByPosition(x, y);
         }
+        return cell;
       },
 
       /**
@@ -755,11 +771,6 @@
       _handleCellMouseout: function(e, details) {
         this._setHoveredCell(null, 1, 1, 0);
         this._closeTooltip();
-      },
-
-      _handleCellClick: function(e, detail) {
-        // TODO: remove log
-        console.info('clicked cell [value=' + detail.value + ']');
       },
 
       _setHoveredCell: function(hoveredCell, delay) {

@@ -65,7 +65,8 @@
               show-legend="{{props.showLegend.value}}"
               legend-config="{{props.legendConfig.value}}"
               collapse-at="{{props.collapseAt.value}}"
-              on-collapsed-changed="_collapsedChanged">
+              on-collapsed-changed="_collapsedChanged"
+              on-cell-click="_handleCellClick">
             </px-vis-heatmap>
           </div>
         </div>
@@ -74,6 +75,8 @@
           <input id="ySize" placeholder="Y Size" />
           <button on-click="_generateRandomData">Generate Data</button>
         </div>
+        <!-- show mouse events -->
+        <div id="eventMessages" style="margin-top:10px;">Event: [[eventMessage]]</div>
       </px-demo-component>
       <!-- END Component ------------------------------------------------------>
 
@@ -126,6 +129,10 @@
             configReset: true
           }];
         }
+      },
+
+      eventMessage: {
+        type: String
       }
     },
 
@@ -398,6 +405,11 @@
           left: chart.margin.left
         });
       }
+    },
+
+    _handleCellClick: function(e, details) {
+      this.set('eventMessage', 'Cell clicked ('
+          + details.cell.x + ', ' + details.cell.y + ') [' + details.cell.value + ']');
     }
 
   });
