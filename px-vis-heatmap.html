@@ -1,4 +1,5 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../px-vis/px-vis-canvas.html">
 <link rel="import" href="../px-vis/px-vis-scale.html">
 <link rel="import" href="../px-vis/px-vis-svg-canvas.html">
 <link rel="import" href="../px-vis/px-vis-axis.html">
@@ -18,7 +19,16 @@
 
 <dom-module id="px-vis-heatmap">
   <template>
-    <style include="px-vis-heatmap-styles"></style>
+    <style include="px-vis-heatmap-styles">
+      :host {
+        position: relative;
+      }
+      .canvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+    </style>
 
     <!-- Media query to determine if context browser should collapse -->
     <template is="dom-if" if="[[_collapseQueryIsValid(collapseAt)]]">
@@ -36,11 +46,19 @@
     <div id="wrapper" class="flex wrapper">
 
       <px-vis-svg-canvas
+        class="canvas"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
         margin="[[margin]]"
         svg="{{svg}}"
         canvas-context="{{canvasContext}}">
+      </px-vis-svg-canvas>
+      <px-vis-canvas
+        class="canvas"
+        width="[[_internalWidth]]"
+        height="[[_internalHeight]]"
+        margin="[[margin]]"
+        canvas-context="{{overlayCanvasContext}}">
       </px-vis-svg-canvas>
       <px-vis-scale
         id="scale"
@@ -335,6 +353,15 @@
         },
 
         /**
+         * Currently selected cell object. Setting this will cause the cell to be shown
+         * the same way it would with a mouse hover event. This should be an object from the
+         * chartData array.
+         */
+        selectedCell: {
+          type: Object
+        },
+
+        /**
          * Size of text used for cell value. Set by series config object or css var.
          */
         cellTextSize: {
@@ -388,6 +415,7 @@
         '_updateSeriesKey(seriesKey)',
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
         '_updateInternalSize(squareMode, width, height, margin.*)',
+        '_selectedCellChanged(selectedCell)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
         '_legendConfigChanged(legendConfig)',
@@ -413,30 +441,37 @@
         this.debounce('chart-drawn-debounce', () => {
           this.canvasContext.pxClearCanvas();
           this.chartData.forEach((d) => {
-            this.canvasContext.beginPath();
-            this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
-            this.canvasContext.fillStyle = this._colorScale(d.value);
-            this.canvasContext.fill();
-            this.canvasContext.strokeStyle = this.cellBorderColor;
-            this.canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
-            this.canvasContext.stroke();
-            // draw value if needed
-            if (this.showCellValue) {
-              const xPos = this.x(d.x) + this.x.bandwidth() / 2;
-              const yPos = this.y(d.y) + this.y.bandwidth() / 2;
-              this.canvasContext.beginPath();
-              this.canvasContext.font = this.cellTextSize + ' Arial';
-              this.canvasContext.fillStyle = this.cellTextColor;
-              this.canvasContext.textAlign = 'center';
-              this.canvasContext.textBaseline = 'middle';
-              this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
-            }
+            this._drawCell(this.canvasContext, d);
           });
+          // add mouse event handlers - add to overlay canvas because its on the top layer
+          this.overlayCanvasContext.canvas.onmousemove = this._handleMouseMove.bind(this);
+          this.overlayCanvasContext.canvas.onmouseout = this._handleMouseMove.bind(this);
           // fire rendered event
           this.fire('chart-drawn', {
             heatmap: this
           });
         }, this.drawDebounceTime);
+      },
+
+      _drawCell: function(canvasContext, cellData) {
+        canvasContext.beginPath();
+        canvasContext.rect(this.x(cellData.x), this.y(cellData.y), this.x.bandwidth(), this.y.bandwidth());
+        canvasContext.fillStyle = this._colorScale(cellData.value);
+        canvasContext.fill();
+        canvasContext.strokeStyle = this.cellBorderColor;
+        canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
+        canvasContext.stroke();
+        // draw value if needed
+        if (this.showCellValue) {
+          const xPos = this.x(cellData.x) + this.x.bandwidth() / 2;
+          const yPos = this.y(cellData.y) + this.y.bandwidth() / 2;
+          canvasContext.beginPath();
+          canvasContext.font = this.cellTextSize + ' Arial';
+          canvasContext.fillStyle = this.cellTextColor;
+          canvasContext.textAlign = 'center';
+          canvasContext.textBaseline = 'middle';
+          canvasContext.fillText(cellData.value, xPos, yPos, this.x.bandwidth());
+        }
       },
 
       _collapseQueryIsValid(query) {
@@ -616,6 +651,20 @@
         return height;
       },
 
+      _selectedCellChanged: function() {
+        // clear overlay canvas
+        this.overlayCanvasContext.pxClearCanvas();
+        if (this.selectedCell) {
+          // lower opacity for entire canvas
+          this.canvasContext.canvas.classList.add('primaryDataMask');
+          // redraw our selected cell on the top layer canvas
+          this._drawCell(this.overlayCanvasContext, this.selectedCell);
+        } else {
+          // remove lowered opacity
+          this.canvasContext.canvas.classList.remove('primaryDataMask');
+        }
+      },
+
       _xAxisConfigChanged: function(xAxisConfig) {
         if (this.hasUndefinedArguments(arguments)) {
           return;
@@ -654,6 +703,45 @@
         } else {
           return Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
         }
+      },
+
+      _handleMouseMove: function(e) {
+        // get canvas coords
+        const canvasRect = this.canvasContext.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - canvasRect.left - this.margin.left;
+        const mouseY = e.clientY - canvasRect.top - this.margin.top;
+        // calc bounding area for cells
+        const bounds = {
+          top: 0,
+          bottom: (canvasRect.bottom - canvasRect.top) - (this.margin.top + this.margin.bottom),
+          left: 0,
+          right: (canvasRect.right - canvasRect.left) - (this.margin.right + this.margin.left)
+        };
+        // make sure mouse is over cell area
+        if (mouseX < bounds.left || mouseX > bounds.right
+            || mouseY < bounds.top || mouseY > bounds.bottom) {
+          this.selectedCell = undefined;
+        } else {
+          // calculate which cell
+          const x = this.x.invert(mouseX);
+          const y = this.y.invert(mouseY);
+          this.selectedCell = this._getCellByPosition(x, y);
+        }
+      },
+
+      /**
+       * Returns cell data from chartData which exist in the x and y categories.
+       * Note xPos and yPos are NOT pixel values, but values that should exist
+       * in the chartExtents or dataExtents.
+       */
+      _getCellByPosition: function(xPos, yPos) {
+        let cell;
+        this.chartData.forEach((item) => {
+          if (item.x === xPos && item.y === yPos) {
+            cell = item;
+          }
+        });
+        return cell;
       },
 
       _handleCellMouseover: function(e, details) {
