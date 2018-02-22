@@ -472,13 +472,18 @@
       },
 
       _drawCell: function(canvasContext, cellData) {
+        const borderWidth = parseFloat(this.cellBorderWidth.replace('px', ''));
+        // draw and fill rectangle
         canvasContext.beginPath();
         canvasContext.rect(this.x(cellData.x), this.y(cellData.y), this.x.bandwidth(), this.y.bandwidth());
         canvasContext.fillStyle = this._colorScale(cellData.value);
         canvasContext.fill();
-        canvasContext.strokeStyle = this.cellBorderColor;
-        canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
-        canvasContext.stroke();
+        // draw border
+        if (!isNaN(borderWidth) && borderWidth > 0) {
+          canvasContext.strokeStyle = this.cellBorderColor;
+          canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
+          canvasContext.stroke();
+        }
         // draw value if needed
         if (this.showCellValue) {
           const xPos = this.x(cellData.x) + this.x.bandwidth() / 2;
