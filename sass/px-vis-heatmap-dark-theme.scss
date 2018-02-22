@@ -19,9 +19,14 @@ html {
   --px-vis-heatmap-cell-border-width: 1px;
   --px-vis-heatmap-cell-text-color: $gray2;
   --px-vis-heatmap-cell-text-size: 12px;
+  // colors
   --px-vis-heatmap-colors-0: $aqua4;
   --px-vis-heatmap-colors-1: $green4;
   --px-vis-heatmap-colors-2: $yellow4;
+  // alt theme colors?
+  --px-vis-heatmap-colors-0: $blue4;
+  --px-vis-heatmap-colors-1: $violet4;
+  --px-vis-heatmap-colors-2: $red4;
 
   // heatmap legend
   --px-vis-heatmap-legend-border-color: $gray15;
