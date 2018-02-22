@@ -23,10 +23,20 @@
       :host {
         position: relative;
       }
+
       .canvas {
         position: absolute;
         left: 0;
         top: 0;
+      }
+
+      #tooltipDiv {
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        background: transparent;
+        width: 1px;
+        height: 1px;
       }
     </style>
 
@@ -34,6 +44,9 @@
     <template is="dom-if" if="[[_collapseQueryIsValid(collapseAt)]]">
       <iron-media-query query$="(max-width: {{_getCollapseQuery(collapseAt)}})" query-matches="{{collapsed}}"></iron-media-query>
     </template>
+
+    <!-- transparent div for placing the tooltip on canvas -->
+    <div id="tooltipDiv"></div>
 
     <!--
       TODO: use _chartWrapperClass
@@ -61,7 +74,7 @@
         height="[[_internalHeight]]"
         margin="[[margin]]"
         canvas-context="{{overlayCanvasContext}}">
-      </px-vis-svg-canvas>
+      </px-vis-canvas>
       <!-- scale -->
       <px-vis-scale
         id="scale"
@@ -161,6 +174,7 @@
     <!-- tooltip -->
     <px-tooltip
       id="tooltip"
+      for="tooltipDiv"
       orientation="top"
       delay="[[tooltipDelay]]"
       ignore-target-events>
@@ -663,7 +677,8 @@
           this.canvasContext.canvas.classList.add('primaryDataMask');
           // redraw our selected cell on the top layer canvas
           this._drawCell(this.overlayCanvasContext, selectedCell);
-          // show tooltip
+          // show tooltip (need to close then open to force reposition)
+          this._closeTooltip();
           this._showTooltip(selectedCell, this._createTooltipMessage(selectedCell));
         } else {
           // remove lowered opacity
@@ -792,11 +807,14 @@
       },
 
       _showTooltip: function(cell, msg) {
-        // calc x and y position for tooltip
-        const pos = {
-          x: this.x(cell.x),
-          y: this.y(cell.y)
-        };
+        const tooltipMarginBottom = -20;
+        // get absolute position for tooltip
+        const x = this.x(cell.x) + this.margin.left + this.x.bandwidth() / 2;
+        const y = this.y(cell.y) - tooltipMarginBottom;
+        this.$.tooltipDiv.style.left = x + 'px';
+        // this.$.tooltipDiv.style.left = 0;
+        this.$.tooltipDiv.style.top = y + 'px';
+        // this.$.tooltipDiv.style.top = 0;
         this.tooltipContent.innerHTML = msg;
         this.$.tooltip.opened = true;
       },
