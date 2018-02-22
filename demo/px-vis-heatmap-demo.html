@@ -73,9 +73,14 @@
           </div>
         </div>
         <div>
-          <input id="xSize" placeholder="X Size" />
-          <input id="ySize" placeholder="Y Size" />
+          <input id="xSize" placeholder="X Size" value="10" />
+          <input id="ySize" placeholder="Y Size" value="10" />
+          <button on-click="_generateGradientData">Gradient Data</button>
           <button on-click="_generateRandomData">Generate Data</button>
+        </div>
+        <div>
+            <button on-click="_showCorrelationPlot">Correlation Plot</button>
+            <button on-click="_showHalfCorrelationPlot">Half Correlation Plot</button>
         </div>
         <!-- show mouse events -->
         <div id="eventMessages" style="margin-top:10px;">Event: [[eventMessage]]</div>
@@ -337,6 +342,28 @@
       this.set('props.height.inputDisabled', !this.props.preventResize.value);
     },
 
+    _getChart: function() {
+      let chart;
+      if (this.shadowRoot) {
+        chart = this.shadowRoot.querySelector('px-vis-heatmap');
+      } else {
+        chart = Polymer.dom(this.root).querySelector('px-vis-heatmap');
+      }
+      return chart;
+    },
+
+    _generateGradientData: function() {
+      const chart = this._getChart();
+      const xSize = Number.parseInt(this.$.xSize.value);
+      const ySize = Number.parseInt(this.$.ySize.value);
+      if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
+        // update extents
+        chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
+        // update data
+        chart.set('chartData', this._generateData(xSize, ySize, true));
+      }
+    },
+
     _generateRandomData: function() {
       const chart = this._getChart();
       const xSize = Number.parseInt(this.$.xSize.value);
@@ -345,16 +372,67 @@
         // update extents
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
         // update data
-        chart.set('chartData', this._generateData(xSize, ySize));
+        chart.set('chartData', this._generateData(xSize, ySize, false));
       }
     },
 
-    _generateData: function(xNum, yNum) {
+    _showCorrelationPlot: function() {
+      const chart = this._getChart();
+      const xSize = 10;
+      const ySize = 10;
+      if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
+        // update extents
+        chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
+        // update data
+        const data = [];
+        for (let x = 0; x < xSize; x++) {
+          for (let y = 0; y < ySize; y++) {
+            // increase values in a diaganol pattern
+            const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
+            data.push({
+              x: x + ':00',
+              y: 'Asset ' + y,
+              value: Math.round(100 * power)
+            });
+          }
+        }
+        chart.set('chartData', data);
+      }
+    },
+
+    _showHalfCorrelationPlot: function() {
+      const chart = this._getChart();
+      const xSize = 10;
+      const ySize = 10;
+      if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
+        // update extents
+        chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
+        // update data
+        const data = [];
+        for (let x = 0; x < xSize; x++) {
+          for (let y = 0; y < ySize; y++) {
+            if (y > x) {
+              continue;
+            }
+            // increase values in a diaganol pattern
+            const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
+            data.push({
+              x: x + ':00',
+              y: 'Asset ' + y,
+              value: Math.round(100 * power)
+            });
+          }
+        }
+        chart.set('chartData', data);
+      }
+    },
+
+    _generateData: function(xNum, yNum, isGradient) {
       const data = [];
       for (let x = 0; x < xNum; x++) {
         for (let y = 0; y < yNum; y++) {
           // increase values in a diaganol pattern
-          const power = (x + y) / (xNum + yNum - 2);
+          const power = isGradient ? (x + y) / (xNum + yNum - 2) : Math.random();
           data.push({
             x: x + ':00',
             y: 'Asset ' + y,
@@ -378,16 +456,6 @@
         exts.y.push('Asset ' + i);
       }
       return exts;
-    },
-
-    _getChart: function() {
-      let chart;
-      if (this.shadowRoot) {
-        chart = this.shadowRoot.querySelector('px-vis-heatmap');
-      } else {
-        chart = Polymer.dom(this.root).querySelector('px-vis-heatmap');
-      }
-      return chart;
     },
 
     _collapsedChanged: function(e, details) {
