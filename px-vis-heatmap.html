@@ -1,4 +1,5 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../px-vis/px-vis-canvas.html">
 <link rel="import" href="../px-vis/px-vis-scale.html">
 <link rel="import" href="../px-vis/px-vis-svg-canvas.html">
 <link rel="import" href="../px-vis/px-vis-axis.html">
@@ -18,12 +19,34 @@
 
 <dom-module id="px-vis-heatmap">
   <template>
-    <style include="px-vis-heatmap-styles"></style>
+    <style include="px-vis-heatmap-styles">
+      :host {
+        position: relative;
+      }
+
+      .canvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+
+      #tooltipDiv {
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        background: transparent;
+        width: 1px;
+        height: 1px;
+      }
+    </style>
 
     <!-- Media query to determine if context browser should collapse -->
     <template is="dom-if" if="[[_collapseQueryIsValid(collapseAt)]]">
       <iron-media-query query$="(max-width: {{_getCollapseQuery(collapseAt)}})" query-matches="{{collapsed}}"></iron-media-query>
     </template>
+
+    <!-- transparent div for placing the tooltip on canvas -->
+    <div id="tooltipDiv"></div>
 
     <!--
       TODO: use _chartWrapperClass
@@ -35,13 +58,24 @@
     -->
     <div id="wrapper" class="flex wrapper">
 
+      <!-- main svg and canvas -->
       <px-vis-svg-canvas
+        class="canvas"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
         margin="[[margin]]"
         svg="{{svg}}"
         canvas-context="{{canvasContext}}">
       </px-vis-svg-canvas>
+      <!-- top layer canvas used for hover effects -->
+      <px-vis-canvas
+        class="canvas"
+        width="[[_internalWidth]]"
+        height="[[_internalHeight]]"
+        margin="[[margin]]"
+        canvas-context="{{overlayCanvasContext}}">
+      </px-vis-canvas>
+      <!-- scale -->
       <px-vis-scale
         id="scale"
         x-axis-type="[[xAxisType]]"
@@ -140,6 +174,7 @@
     <!-- tooltip -->
     <px-tooltip
       id="tooltip"
+      for="tooltipDiv"
       orientation="top"
       delay="[[tooltipDelay]]"
       ignore-target-events>
@@ -335,6 +370,16 @@
         },
 
         /**
+         * Currently selected cell object. Setting this will cause the cell to be shown
+         * the same way it would with a mouse hover event. This should be an object from the
+         * chartData array.
+         */
+        selectedCell: {
+          type: Object,
+          observer: '_selectedCellChanged'
+        },
+
+        /**
          * Size of text used for cell value. Set by series config object or css var.
          */
         cellTextSize: {
@@ -413,30 +458,38 @@
         this.debounce('chart-drawn-debounce', () => {
           this.canvasContext.pxClearCanvas();
           this.chartData.forEach((d) => {
-            this.canvasContext.beginPath();
-            this.canvasContext.rect(this.x(d.x), this.y(d.y), this.x.bandwidth(), this.y.bandwidth());
-            this.canvasContext.fillStyle = this._colorScale(d.value);
-            this.canvasContext.fill();
-            this.canvasContext.strokeStyle = this.cellBorderColor;
-            this.canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
-            this.canvasContext.stroke();
-            // draw value if needed
-            if (this.showCellValue) {
-              const xPos = this.x(d.x) + this.x.bandwidth() / 2;
-              const yPos = this.y(d.y) + this.y.bandwidth() / 2;
-              this.canvasContext.beginPath();
-              this.canvasContext.font = this.cellTextSize + ' Arial';
-              this.canvasContext.fillStyle = this.cellTextColor;
-              this.canvasContext.textAlign = 'center';
-              this.canvasContext.textBaseline = 'middle';
-              this.canvasContext.fillText(d.value, xPos, yPos, this.x.bandwidth());
-            }
+            this._drawCell(this.canvasContext, d);
           });
+          // add mouse event handlers - add to overlay canvas because its on the top layer
+          this.overlayCanvasContext.canvas.onmousemove = this._handleMouseMove.bind(this);
+          this.overlayCanvasContext.canvas.onmouseout = this._handleMouseMove.bind(this);
+          this.overlayCanvasContext.canvas.onclick = this._handleClick.bind(this);
           // fire rendered event
           this.fire('chart-drawn', {
             heatmap: this
           });
         }, this.drawDebounceTime);
+      },
+
+      _drawCell: function(canvasContext, cellData) {
+        canvasContext.beginPath();
+        canvasContext.rect(this.x(cellData.x), this.y(cellData.y), this.x.bandwidth(), this.y.bandwidth());
+        canvasContext.fillStyle = this._colorScale(cellData.value);
+        canvasContext.fill();
+        canvasContext.strokeStyle = this.cellBorderColor;
+        canvasContext.lineWidth = this.cellBorderWidth.replace('px', '');
+        canvasContext.stroke();
+        // draw value if needed
+        if (this.showCellValue) {
+          const xPos = this.x(cellData.x) + this.x.bandwidth() / 2;
+          const yPos = this.y(cellData.y) + this.y.bandwidth() / 2;
+          canvasContext.beginPath();
+          canvasContext.font = this.cellTextSize + ' Arial';
+          canvasContext.fillStyle = this.cellTextColor;
+          canvasContext.textAlign = 'center';
+          canvasContext.textBaseline = 'middle';
+          canvasContext.fillText(cellData.value, xPos, yPos, this.x.bandwidth());
+        }
       },
 
       _collapseQueryIsValid(query) {
@@ -616,6 +669,36 @@
         return height;
       },
 
+      _selectedCellChanged: function(selectedCell, prevSelectedCell) {
+        // clear overlay canvas
+        this.overlayCanvasContext.pxClearCanvas();
+        if (selectedCell) {
+          // lower opacity for entire canvas
+          this.canvasContext.canvas.classList.add('primaryDataMask');
+          // redraw our selected cell on the top layer canvas
+          this._drawCell(this.overlayCanvasContext, selectedCell);
+          // show tooltip (need to close then open to force reposition)
+          this._closeTooltip();
+          this._showTooltip(selectedCell, this._createTooltipMessage(selectedCell));
+        } else {
+          // remove lowered opacity
+          this.canvasContext.canvas.classList.remove('primaryDataMask');
+          // hide tooltip
+          this._closeTooltip();
+        }
+        // fire mouseover and mouseout events
+        if (prevSelectedCell) {
+          this.fire('cell-mouseout', {
+            cell: prevSelectedCell
+          });
+        }
+        if (selectedCell) {
+          this.fire('cell-mouseover', {
+            cell: selectedCell
+          });
+        }
+      },
+
       _xAxisConfigChanged: function(xAxisConfig) {
         if (this.hasUndefinedArguments(arguments)) {
           return;
@@ -656,6 +739,60 @@
         }
       },
 
+      _handleMouseMove: function(e) {
+        this.selectedCell = this._getCellFromMouseEvent(e);
+      },
+
+      _handleClick: function(e) {
+        const cell = this._getCellFromMouseEvent(e);
+        if (cell) {
+          this.fire('cell-click', {
+            cell: cell
+          });
+        }
+      },
+
+      _getCellFromMouseEvent: function(e) {
+        let cell;
+        // get canvas coords
+        const canvasRect = this.canvasContext.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - canvasRect.left - this.margin.left;
+        const mouseY = e.clientY - canvasRect.top - this.margin.top;
+        // calc bounding area for cells
+        const bounds = {
+          top: 0,
+          bottom: (canvasRect.bottom - canvasRect.top) - (this.margin.top + this.margin.bottom),
+          left: 0,
+          right: (canvasRect.right - canvasRect.left) - (this.margin.right + this.margin.left)
+        };
+        // make sure mouse is over cell area
+        if (mouseX < bounds.left || mouseX > bounds.right
+            || mouseY < bounds.top || mouseY > bounds.bottom) {
+          // do nothing
+        } else {
+          // calculate which cell
+          const x = this.x.invert(mouseX);
+          const y = this.y.invert(mouseY);
+          cell = this._getCellByPosition(x, y);
+        }
+        return cell;
+      },
+
+      /**
+       * Returns cell data from chartData which exist in the x and y categories.
+       * Note xPos and yPos are NOT pixel values, but values that should exist
+       * in the chartExtents or dataExtents.
+       */
+      _getCellByPosition: function(xPos, yPos) {
+        let cell;
+        this.chartData.forEach((item) => {
+          if (item.x === xPos && item.y === yPos) {
+            cell = item;
+          }
+        });
+        return cell;
+      },
+
       _handleCellMouseover: function(e, details) {
         // show over cell value if available, otherwise over entire cell
         const el = details.cell.getSvgTextElement() || details.cell.getSvgElement();
@@ -669,38 +806,15 @@
         this._closeTooltip();
       },
 
-      _handleCellClick: function(e, detail) {
-        // TODO: remove log
-        console.info('clicked cell [value=' + detail.value + ']');
-      },
-
-      _setHoveredCell: function(hoveredCell, delay) {
-        let cells;
-        // get all cell components
-        if (this.shadowRoot) {
-          cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
-        } else {
-          cells = Polymer.dom(this.root).querySelectorAll('px-vis-heatmap-cell');
-        }
-        // lower opacity for all non-hovered elements
-        this.debounce('opacityTimeout', () => {
-          cells.forEach((cell) => {
-            if (!cell || !cell.getSvgElement()) {
-              return;
-            }
-            if (hoveredCell && hoveredCell !== cell) {
-              // lower opacity
-              cell.getSvgElement().classList.add('primaryDataMask');
-            } else {
-              // set opacity to default
-              cell.getSvgElement().classList.remove('primaryDataMask');
-            }
-          });
-        }, delay);
-      },
-
-      _showTooltip: function(el, msg) {
-        this.$.tooltip.for = el;
+      _showTooltip: function(cell, msg) {
+        const tooltipMarginBottom = -20;
+        // get absolute position for tooltip
+        const x = this.x(cell.x) + this.margin.left + this.x.bandwidth() / 2;
+        const y = this.y(cell.y) - tooltipMarginBottom;
+        this.$.tooltipDiv.style.left = x + 'px';
+        // this.$.tooltipDiv.style.left = 0;
+        this.$.tooltipDiv.style.top = y + 'px';
+        // this.$.tooltipDiv.style.top = 0;
         this.tooltipContent.innerHTML = msg;
         this.$.tooltip.opened = true;
       },
@@ -711,10 +825,10 @@
 
       _createTooltipMessage: function(cell) {
         let msg = '<h1 style="text-weight:bold;font-size:125%;">';
-        msg += 'Asset ' + cell._getValue('x') + ', ' + cell._getValue('y');
+        msg += 'Asset ' + cell.x + ', ' + cell.y;
         msg += '</h1>';
         // use parseFloat to be safe of XSS
-        msg += cell._getValue('value');
+        msg += cell.value;
         return msg;
       },
 
