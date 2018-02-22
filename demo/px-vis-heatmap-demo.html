@@ -198,48 +198,48 @@
         inputType: 'code:JSON',
         defaultValue: [
           {
-            x: 'Cat A',
-            y: 'Cat 1',
+            x: '1:00',
+            y: 'Asset 1',
             value: 0
           },
           {
-            x: 'Cat A',
-            y: 'Cat 2',
+            x: '1:00',
+            y: 'Asset 2',
             value: 10
           },
           {
-            x: 'Cat A',
-            y: 'Cat 3',
+            x: '1:00',
+            y: 'Asset 3',
             value: 20
           },
           {
-            x: 'Cat B',
-            y: 'Cat 1',
+            x: '2:00',
+            y: 'Asset 1',
             value: 30
           },
           {
-            x: 'Cat B',
-            y: 'Cat 2',
+            x: '2:00',
+            y: 'Asset 2',
             value: 40
           },
           {
-            x: 'Cat B',
-            y: 'Cat 3',
+            x: '2:00',
+            y: 'Asset 3',
             value: 50
           },
           {
-            x: 'Cat C',
-            y: 'Cat 1',
+            x: '3:00',
+            y: 'Asset 1',
             value: 65
           },
           {
-            x: 'Cat C',
-            y: 'Cat 2',
+            x: '3:00',
+            y: 'Asset 2',
             value: 75
           },
           {
-            x: 'Cat C',
-            y: 'Cat 3',
+            x: '3:00',
+            y: 'Asset 3',
             value: 100
           },
         ]
@@ -249,8 +249,8 @@
         type: Object,
         inputType: 'code:JSON',
         defaultValue: {
-          x: ['Cat A', 'Cat B', 'Cat C'],
-          y: ['Cat 1', 'Cat 2', 'Cat 3'],
+          x: ['1:00', '2:00', '3:00'],
+          y: ['Asset 1', 'Asset 2', 'Asset 3'],
           value: [0, 100]
         }
       },
@@ -356,8 +356,8 @@
           // increase values in a diaganol pattern
           const power = (x + y) / (xNum + yNum - 2);
           data.push({
-            x: x,
-            y: y,
+            x: x + ':00',
+            y: 'Asset ' + y,
             value: Math.round(100 * power)
           });
         }
@@ -372,10 +372,10 @@
         value: [0, 100]
       };
       for (let i = 0; i < xNum; i++) {
-        exts.x.push(i);
+        exts.x.push(i + ':00');
       }
       for (let i = 0; i < yNum; i++) {
-        exts.y.push(i);
+        exts.y.push('Asset ' + i);
       }
       return exts;
     },
