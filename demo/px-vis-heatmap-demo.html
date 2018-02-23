@@ -20,6 +20,7 @@
 
 <!-- Imports for this component -->
 <link rel="import" href="../px-vis-heatmap.html" />
+<link rel="import" href="../../px-modal/px-modal.html" />
 <!-- Demo DOM module -->
 <dom-module id="px-vis-heatmap-demo">
   <template>
@@ -82,8 +83,21 @@
             <button on-click="_showCorrelationPlot">Correlation Plot</button>
             <button on-click="_showHalfCorrelationPlot">Half Correlation Plot</button>
         </div>
+        <div>
+            <button on-click="_export">Export as Image</button>
+        </div>
         <!-- show mouse events -->
         <div id="eventMessages" style="margin-top:10px;">Event: [[eventMessage]]</div>
+        <!-- used to show exported image -->
+        <px-modal>
+          <div slot="header">Exported Image</div>
+          <div slot="body" id="exportedImageContainer">
+            <!-- <img src="[[exportedImg]]" /> -->
+          </div>
+          <div slot="reject-trigger">&nbsp;</div>
+          <!-- <button slot="reject-trigger">Close</button> -->
+          <button slot="accept-trigger">Close</button>
+        </px-modal>
       </px-demo-component>
       <!-- END Component ------------------------------------------------------>
 
@@ -490,6 +504,20 @@
     _handleCellMouseout: function(e, details) {
       this.set('eventMessage', 'Cell mouseout ('
           + details.cell.x + ', ' + details.cell.y + ') [' + details.cell.value + ']');
+    },
+
+    _export: function() {
+      const chart = this._getChart();
+      const modal = this.shadowRoot.querySelector('px-modal');
+      chart.getImage((data) => {
+        if (this._img) {
+          this.$.exportedImageContainer.removeChild(this._img);
+        }
+        this._img = document.createElement('img');
+        this._img.src = data.image;
+        this.$.exportedImageContainer.append(this._img);
+        modal.opened = true;
+      });
     }
 
   });
