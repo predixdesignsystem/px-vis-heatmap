@@ -65,7 +65,8 @@
         height="[[_internalHeight]]"
         margin="[[margin]]"
         svg="{{svg}}"
-        canvas-context="{{canvasContext}}">
+        canvas-context="{{canvasContext}}"
+        px-svg-elem="{{pxSvgElem}}">
       </px-vis-svg-canvas>
       <!-- top layer canvas used for hover effects -->
       <px-vis-canvas
@@ -204,7 +205,10 @@
         PxVisBehaviorChart.axisConfigs,
         PxVisBehaviorChart.chartAutoResize,
         PxVisBehaviorChart.layers,
-        PxVisBehaviorChart.subConfiguration
+        PxVisBehaviorChart.saveImage,
+        PxVisBehaviorChart.subConfiguration,
+        PxVisBehaviorD3.canvasContext,
+        PxVisBehaviorD3.svgLower
       ],
 
       properties: {
