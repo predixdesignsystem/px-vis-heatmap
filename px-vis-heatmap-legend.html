@@ -37,10 +37,11 @@
       height="[[height]]"
       orientation="[[_axisOrientation]]"
       label-position="center"
+      axis-tick-color="transparent"
+      axis-line-color="transparent"
       prevent-series-bar
       complete-series-config="[[completeSeriesConfig]]"
       muted-series=[[mutedSeries]]
-      tick-size-inner="[[tickSizeInner]]"
       domain-changed="[[_axisDomainChanged]]">
     </px-vis-axis>
   </template>
@@ -117,14 +118,6 @@
         drawDebounceTime: {
           type: Number,
           value: 100
-        },
-
-        /**
-         * Length of the yAxis tick marks.
-         */
-        tickSizeInner: {
-          type: Number,
-          value: 0
         },
 
         /**
