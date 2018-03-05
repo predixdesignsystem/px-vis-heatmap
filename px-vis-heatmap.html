@@ -12,6 +12,7 @@
 
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
+<link rel="import" href="px-vis-heatmap-custom-column.html">
 
 <!-- <link rel="import" href="../px-vis/css/px-vis-styles.html"> -->
 <link rel="import" href="css/px-vis-heatmap-styles.html">
@@ -154,6 +155,24 @@
         </px-vis-heatmap-cell>
       </template> -->
 
+      <template is="dom-if" if="[[showCustomColumn]]" restamp>
+        <px-vis-heatmap-custom-column
+          border-color="[[cellBorderColor]]"
+          border-width="[[cellBorderWidth]]"
+          svg="[[svg]]"
+          x="[[x]]"
+          y="[[y]]"
+          margin="[[_internalMargin]]"
+          width="[[_internalWidth]]"
+          height="[[_internalHeight]]"
+          chart-extents="[[chartExtents]]"
+          data-extents="[[dataExtents]]"
+          complete-series-config="[[completeSeriesConfig]]"
+          series-key="[[seriesKey]]"
+          domain-changed="[[domainChanged]]">
+        </px-vis-heatmap-custom-column>
+      </template>
+
       <template is="dom-if" if="[[showLegend]]" restamp>
         <px-vis-heatmap-legend
           id="legend"
@@ -274,13 +293,8 @@
           value: false
         },
 
-        customColumnData: {
+        customColumnConfig: {
           type: Object
-        },
-
-        customColumnWidth: {
-          type: Number,
-          value: 100
         },
 
         /**
@@ -441,7 +455,8 @@
         },
 
         _internalMargin: {
-          type: Object
+          type: Object,
+          value: {}
         },
 
         /**
@@ -450,10 +465,6 @@
         _stylesResolved: {
           type: Boolean,
           value: false
-        },
-
-        _customColumnSvg: {
-          type: Object
         },
 
         _legendGapSize: {
@@ -465,18 +476,18 @@
 
       observers: [
         '_drawCells(_internalMargin.*, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale, _stylesResolved)',
-        '_drawCustomColumn(showCustomColumn, customColumnWidth, customColumnData.*, _internalMargin.*, x, y, domainChanged, completeSeriesConfig, seriesKey, _stylesResolved)',
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
         '_updateSeriesKey(seriesKey)',
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
         '_updateInternalSize(squareMode, width, height, _internalMargin.*)',
-        '_updateInternalMargin(showCustomColumn, margin.*)',
-        '_updateLegendGapSize(showCustomColumn, customColumnWidth)',
+        '_updateInternalMargin(showCustomColumn, customColumnConfig, margin.*)',
+        '_updateLegendGapSize(showCustomColumn, customColumnConfig.*)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
-        '_legendConfigChanged(legendConfig)',
+        '_legendConfigChanged(showLegend, legendConfig)',
+        '_customColumnConfigChanged(showCustomColumn, customColumnConfig)',
         '_resolveCssVars(_stylesUpdated)'
       ],
 
@@ -536,63 +547,6 @@
           canvasContext.textBaseline = 'middle';
           canvasContext.fillText(cellData.value, xPos, yPos, this.x.bandwidth());
         }
-      },
-
-      _drawCustomColumn: function() {
-        const exts = this.chartExtents || this.dataExtents;
-        if (!exts || this.hasUndefinedArguments(arguments)) {
-          return;
-        }
-        this.debounce('custom-column-drawn-debounce', () => {
-          // calculate position (using translate transform)
-          const xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth();
-          const yOffset = 0;
-          // xOffset maybe invalid if the x function is being updated
-          if (xOffset !== 0 && !xOffset) {
-            return;
-          }
-          const translate = 'translate(' + xOffset + ', ' + yOffset + ')';
-          // remove prev column svg
-          if (this._customColumnSvg) {
-            this._customColumnSvg.remove();
-          }
-          // create svg group for this column
-          this._customColumnSvg = this.svg.append('g')
-            .attr('transform', translate);
-          // draw each cell for column
-          exts.y.forEach(function(yVal, i) {
-            const yPos = this.y(yVal);
-            const textPos = yPos + this.y.bandwidth() / 2;
-            // draw line
-            this._appendSvgLine(this._customColumnSvg, 0, this.customColumnWidth,
-              yPos, yPos, this.cellBorderColor, this.cellBorderWidth);
-            // draw value
-            this._appendSvgText(this._customColumnSvg, this.customColumnWidth / 2, textPos, '50000');
-          }.bind(this));
-          // manually draw last (bottom) line
-          const yPos = this.y(exts.y[0]) + this.y.bandwidth();
-          this._appendSvgLine(this._customColumnSvg, 0, this.customColumnWidth,
-            yPos, yPos, this.cellBorderColor, this.cellBorderWidth);
-        }, this.drawDebounceTime);
-      },
-
-      _appendSvgLine: function(svg, x1, x2, y1, y2, stroke, strokeWidth) {
-        svg.append('line')
-          .attr('x1', x1)
-          .attr('x2', x2)
-          .attr('y1', y1)
-          .attr('y2', y2)
-          .style('stroke', stroke)
-          .style('stroke-width', strokeWidth);
-      },
-
-      _appendSvgText: function(svg, x, y, text) {
-        svg.append('text')
-          .attr('x', x)
-          .attr('y', y)
-          .text(text)
-          .attr('text-anchor', 'middle')
-          .attr('alignment-baseline', 'middle');
       },
 
       _collapseQueryIsValid: function(query) {
@@ -776,17 +730,23 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        const margin = {
-          top: this.margin.top,
-          bottom: this.margin.bottom,
-          left: this.margin.left,
-          right: this.margin.right
-        };
-        // add additional margin for custom column
-        if (this.showCustomColumn) {
-          margin.right += this.customColumnWidth;
-        }
-        this.set('_internalMargin', margin);
+        this.debounce('adsfasdfasdf', function() {
+          const margin = {
+            top: this.margin.top,
+            bottom: this.margin.bottom,
+            left: this.margin.left,
+            right: this.margin.right
+          };
+          // add additional margin for custom column
+          if (this.showCustomColumn) {
+            const customColumn = this._getCustomColumn();
+            if (customColumn) {
+              margin.right += customColumn.columnWidth;
+            }
+          }
+          this.set('_internalMargin', margin);
+        }.bind(this), 10);
+
       },
 
       _selectedCellChanged: function(selectedCell, prevSelectedCell) {
@@ -821,14 +781,18 @@
 
       _updateLegendGapSize: function() {
         if (this.hasUndefinedArguments(arguments)) {
-          console.log('error');
           return;
         }
-        let gapSize = 10;
-        if (this.showCustomColumn) {
-          gapSize += this.customColumnWidth;
-        }
-        this.set('_legendGapSize', gapSize);
+        this.debounce('update-legend-gap-size', function() {
+          let gapSize = 10;
+          if (this.showCustomColumn) {
+            const customColumn = this._getCustomColumn();
+            if (customColumn) {
+              gapSize += customColumn.columnWidth;
+            }
+          }
+          this.set('_legendGapSize', gapSize);
+        }.bind(this), 10);
       },
 
       _xAxisConfigChanged: function(xAxisConfig) {
@@ -845,20 +809,27 @@
         this._applyConfigToElement(yAxisConfig, this.$.yAxis);
       },
 
-      _legendConfigChanged: function(legendConfig) {
+      _legendConfigChanged: function(showLegend, legendConfig) {
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
         // debouncing because this gets called before dom-if that instantiates legend happens
         this.debounce('legend-config-changed', function() {
-          let legend;
-          if (this.shadowRoot) {
-            legend = this.shadowRoot.querySelector('px-vis-heatmap-legend');
-          } else {
-            legend = Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
-          }
+          const legend = this._getLegend();
           if (legend) {
             this._applyConfigToElement(legendConfig, legend);
+          }
+        }.bind(this), 10);
+      },
+
+      _customColumnConfigChanged: function(showCustomColumn, customColumnConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.debounce('custom-column-config-changed', function() {
+          const customColumn = this._getCustomColumn();
+          if (customColumn) {
+            this._applyConfigToElement(customColumnConfig, customColumn);
           }
         }.bind(this), 10);
       },
@@ -868,6 +839,14 @@
           return this.shadowRoot.querySelector('px-vis-heatmap-legend');
         } else {
           return Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
+        }
+      },
+
+      _getCustomColumn: function() {
+        if (this.shadowRoot) {
+          return this.shadowRoot.querySelector('px-vis-heatmap-custom-column');
+        } else {
+          return Polymer.dom(this.root).querySelector('px-vis-heatmap-custom-column');
         }
       },
 

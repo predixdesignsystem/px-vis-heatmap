@@ -56,7 +56,7 @@
               chart-data="{{props.chartData.value}}"
               chart-extents="{{props.chartExtents.value}}"
               show-custom-column="{{props.showCustomColumn.value}}"
-              custom-column-data="{{props.customColumnData.value}}"
+              custom-column-config="{{props.customColumnConfig.value}}"
               square-mode="{{props.squareMode.value}}"
               series-config="{{props.seriesConfig.value}}"
               scale-padding="{{props.scalePadding.value}}"
@@ -295,12 +295,13 @@
         defaultValue: true
       },
 
-      customColumnData: {
+      customColumnConfig: {
         type: Object,
         inputType: 'code:JSON',
         defaultValue: {
-          name: 'Accuracy',
-          values: [
+          columnName: 'Accuracy',
+          columnWidth: 100,
+          columnData: [
             {
               y: 'Asset 1',
               value: 10
