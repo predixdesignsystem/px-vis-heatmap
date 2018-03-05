@@ -167,6 +167,7 @@
           chart-extents="[[chartExtents]]"
           data-extents="[[dataExtents]]"
           orientation="[[_legendOrientation]]"
+          gap-size="[[_legendGapSize]]"
           complete-series-config="[[completeSeriesConfig]]"
           domain-changed="[[domainChanged]]">
         </px-vis-heatmap-legend>
@@ -449,12 +450,22 @@
         _stylesResolved: {
           type: Boolean,
           value: false
+        },
+
+        _customColumnSvg: {
+          type: Object
+        },
+
+        _legendGapSize: {
+          type: Number,
+          value: 10
         }
 
       },
 
       observers: [
         '_drawCells(_internalMargin.*, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale, _stylesResolved)',
+        '_drawCustomColumn(showCustomColumn, customColumnWidth, customColumnData.*, _internalMargin.*, x, y, domainChanged, completeSeriesConfig, seriesKey, _stylesResolved)',
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
@@ -462,6 +473,7 @@
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
         '_updateInternalSize(squareMode, width, height, _internalMargin.*)',
         '_updateInternalMargin(showCustomColumn, margin.*)',
+        '_updateLegendGapSize(showCustomColumn, customColumnWidth)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
         '_legendConfigChanged(legendConfig)',
@@ -527,7 +539,60 @@
       },
 
       _drawCustomColumn: function() {
+        const exts = this.chartExtents || this.dataExtents;
+        if (!exts || this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.debounce('custom-column-drawn-debounce', () => {
+          // calculate position (using translate transform)
+          const xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth();
+          const yOffset = 0;
+          // xOffset maybe invalid if the x function is being updated
+          if (xOffset !== 0 && !xOffset) {
+            return;
+          }
+          const translate = 'translate(' + xOffset + ', ' + yOffset + ')';
+          // remove prev column svg
+          if (this._customColumnSvg) {
+            this._customColumnSvg.remove();
+          }
+          // create svg group for this column
+          this._customColumnSvg = this.svg.append('g')
+            .attr('transform', translate);
+          // draw each cell for column
+          exts.y.forEach(function(yVal, i) {
+            const yPos = this.y(yVal);
+            const textPos = yPos + this.y.bandwidth() / 2;
+            // draw line
+            this._appendSvgLine(this._customColumnSvg, 0, this.customColumnWidth,
+              yPos, yPos, this.cellBorderColor, this.cellBorderWidth);
+            // draw value
+            this._appendSvgText(this._customColumnSvg, this.customColumnWidth / 2, textPos, '50000');
+          }.bind(this));
+          // manually draw last (bottom) line
+          const yPos = this.y(exts.y[0]) + this.y.bandwidth();
+          this._appendSvgLine(this._customColumnSvg, 0, this.customColumnWidth,
+            yPos, yPos, this.cellBorderColor, this.cellBorderWidth);
+        }, this.drawDebounceTime);
+      },
 
+      _appendSvgLine: function(svg, x1, x2, y1, y2, stroke, strokeWidth) {
+        svg.append('line')
+          .attr('x1', x1)
+          .attr('x2', x2)
+          .attr('y1', y1)
+          .attr('y2', y2)
+          .style('stroke', stroke)
+          .style('stroke-width', strokeWidth);
+      },
+
+      _appendSvgText: function(svg, x, y, text) {
+        svg.append('text')
+          .attr('x', x)
+          .attr('y', y)
+          .text(text)
+          .attr('text-anchor', 'middle')
+          .attr('alignment-baseline', 'middle');
       },
 
       _collapseQueryIsValid: function(query) {
@@ -752,6 +817,18 @@
             cell: selectedCell
           });
         }
+      },
+
+      _updateLegendGapSize: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          console.log('error');
+          return;
+        }
+        let gapSize = 10;
+        if (this.showCustomColumn) {
+          gapSize += this.customColumnWidth;
+        }
+        this.set('_legendGapSize', gapSize);
       },
 
       _xAxisConfigChanged: function(xAxisConfig) {
