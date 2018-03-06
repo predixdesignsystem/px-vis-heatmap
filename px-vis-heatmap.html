@@ -296,7 +296,8 @@
         },
 
         customColumnConfig: {
-          type: Object
+          type: Object,
+          value: {}
         },
 
         /**
@@ -485,7 +486,7 @@
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
         '_updateInternalSize(squareMode, width, height, _internalMargin.*)',
         '_updateInternalMargin(showCustomColumn, customColumnConfig, margin.*)',
-        '_updateLegendGapSize(showCustomColumn, customColumnConfig.*)',
+        '_updateLegendGapSize(showCustomColumn, customColumnConfig.*, _legendOrientation)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
         '_legendConfigChanged(showLegend, legendConfig)',
@@ -732,7 +733,7 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        this.debounce('adsfasdfasdf', function() {
+        this.debounce('update-internal-margin', function() {
           const margin = {
             top: this.margin.top,
             bottom: this.margin.bottom,
@@ -742,13 +743,12 @@
           // add additional margin for custom column
           if (this.showCustomColumn) {
             const customColumn = this._getCustomColumn();
-            if (customColumn) {
+            if (customColumn && customColumn.columnWidth) {
               margin.right += customColumn.columnWidth;
             }
           }
           this.set('_internalMargin', margin);
         }.bind(this), 10);
-
       },
 
       _selectedCellChanged: function(selectedCell, prevSelectedCell) {
@@ -786,8 +786,8 @@
           return;
         }
         this.debounce('update-legend-gap-size', function() {
-          let gapSize = 10;
-          if (this.showCustomColumn) {
+          let gapSize = 20;
+          if (this.showCustomColumn && this._legendOrientation !== 'bottom') {
             const customColumn = this._getCustomColumn();
             if (customColumn) {
               gapSize += customColumn.columnWidth;
