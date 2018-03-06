@@ -36,7 +36,7 @@
           type: Array
         },
 
-        columnName: {
+        columnLabel: {
           type: String,
         },
 
@@ -59,6 +59,29 @@
         borderWidth: {
           type: String,
           value: '1px'
+        },
+
+        textColor: {
+          type: String,
+          value: 'black'
+        },
+
+        textSize: {
+          type: String,
+          value: '12px'
+        },
+
+        columnLabelTextColor: {
+          type: String
+        },
+
+        columnLabelTextSize: {
+          type: String
+        },
+
+        columnLabelSpacing: {
+          type: Number,
+          value: 15
         },
 
         /**
@@ -84,7 +107,8 @@
       },
 
       observers: [
-        '_drawElement(columnWidth, columnData.*, columnName, borderColor, borderWidth, margin.*, x, y, domainChanged, completeSeriesConfig, seriesKey, _stylesResolved)',
+        '_drawElement(columnWidth, columnData.*, columnLabel, borderColor, borderWidth, margin.*, x, y, domainChanged, completeSeriesConfig, seriesKey, _stylesResolved)',
+        '_resolveCssVars(_stylesUpdated)'
       ],
 
       detached: function() {
@@ -118,18 +142,23 @@
           // draw row lines in column
           exts.y.forEach(function(yVal, i) {
             const yPos = this.y(yVal);
-            this._appendSvgLine(this._svgGroup, 0, this.columnWidth,
-              yPos, yPos, this.borderColor, this.borderWidth);
+            this._appendSvgLine(this._svgGroup, 0, this.columnWidth, yPos, yPos);
           }.bind(this));
           // draw values in each row
           this.columnData.forEach(function(data, i) {
             const yPos = this.y(data.y) + this.y.bandwidth() / 2;
-            this._appendSvgText(this._svgGroup, this.columnWidth / 2, yPos, data.value);
+            this._appendSvgText(this._svgGroup, this.columnWidth / 2, yPos, data.value,
+              this.textColor, this.textSize);
           }.bind(this));
           // manually draw last (bottom) line
-          const yPos = this.y(exts.y[0]) + this.y.bandwidth();
-          this._appendSvgLine(this._svgGroup, 0, this.columnWidth,
-            yPos, yPos, this.borderColor, this.borderWidth);
+          let yPos = this.y(exts.y[0]) + this.y.bandwidth();
+          this._appendSvgLine(this._svgGroup, 0, this.columnWidth, yPos, yPos);
+          // draw column label
+          if (this.columnLabel) {
+            yPos = this.y(exts.y[0]) + this.y.bandwidth() + this.columnLabelSpacing;
+            this._appendSvgText(this._svgGroup, this.columnWidth / 2, yPos, this.columnLabel,
+              this.columnLabelTextColor, this.columnLabelTextSize);
+          }
         }, this.drawDebounceTime);
       },
 
@@ -139,31 +168,33 @@
           .attr('x2', x2)
           .attr('y1', y1)
           .attr('y2', y2)
-          .style('stroke', stroke)
-          .style('stroke-width', strokeWidth);
+          .style('stroke', this.borderColor)
+          .style('stroke-width', this.borderWidth);
       },
 
-      _appendSvgText: function(svg, x, y, text) {
+      _appendSvgText: function(svg, x, y, text, textColor, textSize) {
         svg.append('text')
           .attr('x', x)
           .attr('y', y)
           .text(text)
           .attr('text-anchor', 'middle')
           .attr('alignment-baseline', 'middle')
-          .attr('font-size', this.cellTextSize);
+          .attr('font-size', textSize)
+          .attr('fill', textColor);
       },
 
       _resolveCssVars: function() {
-        // TODO:
+        // TODO: resolve css vars for custom column
         this.debounce('resolve-css-vars', function() {
           // get series config obj
           const seriesConfig = this.completeSeriesConfig || {};
           const config = seriesConfig[this.seriesKey] || {};
           // resolve all css vars
-          // this.borderColor = config.legendBorderColor
-          //   || this._checkThemeVariable('--px-vis-heatmap-custom-column-border-color', '#FFF');
-          // this.borderWidth = config.legendBorderWidth
-          //   || this._checkThemeVariable('--px-vis-heatmap-custom-column-border-width', '0');
+          this.columnLabelTextColor = config.columnLabelTextColor
+            || this._checkThemeVariable('--px-vis-axis-color', 'black');
+          // TODO: sync this size with the axis size
+          this.columnLabelTextSize = config.columnLabelTextColor
+            || this._checkThemeVariable('', '12px');
           // // notify children
           // this.$.yAxis.updateStyles();
           // notify that style vars have changed

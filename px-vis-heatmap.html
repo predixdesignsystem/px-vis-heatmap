@@ -159,6 +159,8 @@
         <px-vis-heatmap-custom-column
           border-color="[[cellBorderColor]]"
           border-width="[[cellBorderWidth]]"
+          text-size="[[cellTextSize]]"
+          text-color="[[cellTextColor]]"
           svg="[[svg]]"
           x="[[x]]"
           y="[[y]]"
@@ -965,6 +967,10 @@
           const legend = this._getLegend();
           if (legend) {
             legend.updateStyles();
+          }
+          const customColumn = this._getCustomColumn();
+          if (customColumn) {
+            customColumn.updateStyles();
           }
           // notify that style vars have changed
           this.set('_stylesResolved', !this._stylesResolved);
