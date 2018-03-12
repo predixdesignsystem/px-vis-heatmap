@@ -17,5 +17,8 @@
     "PxVisBehaviorChart": false,
     "PxVisBehaviorD3": false,
     "Vaadin": false
+  },
+  "rules": {
+    "max-len": 0
   }
 }
