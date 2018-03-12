@@ -55,6 +55,8 @@
               margin="{{props.margin.value}}"
               chart-data="{{props.chartData.value}}"
               chart-extents="{{props.chartExtents.value}}"
+              show-custom-column="{{props.showCustomColumn.value}}"
+              custom-column-config="{{props.customColumnConfig.value}}"
               square-mode="{{props.squareMode.value}}"
               series-config="{{props.seriesConfig.value}}"
               scale-padding="{{props.scalePadding.value}}"
@@ -124,15 +126,6 @@
 <script>
   Polymer({
     is: 'px-vis-heatmap-demo',
-
-    ready: function() {
-      // TODO: remove - using for easier dev
-      if (this.shadowRoot) {
-        window.chart = this.shadowRoot.querySelector('px-vis-heatmap');
-      } else {
-        window.chart = Polymer.dom(this.root).querySelector('px-vis-heatmap');
-      }
-    },
 
     properties: {
       props: {
@@ -260,7 +253,7 @@
             x: '3:00',
             y: 'Asset 3',
             value: 100
-          },
+          }
         ]
       },
 
@@ -284,6 +277,35 @@
             'y': 'y',
             'value': 'value'
           }
+        }
+      },
+
+      showCustomColumn: {
+        type: Boolean,
+        inputType: 'toggle',
+        defaultValue: true
+      },
+
+      customColumnConfig: {
+        type: Object,
+        inputType: 'code:JSON',
+        defaultValue: {
+          columnLabel: 'Accuracy',
+          columnWidth: 75,
+          columnData: [
+            {
+              y: 'Asset 1',
+              value: 10
+            },
+            {
+              y: 'Asset 2',
+              value: 20
+            },
+            {
+              y: 'Asset 3',
+              value: 30
+            }
+          ]
         }
       },
 

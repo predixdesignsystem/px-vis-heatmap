@@ -12,6 +12,7 @@
 
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
+<link rel="import" href="px-vis-heatmap-custom-column.html">
 
 <!-- <link rel="import" href="../px-vis/css/px-vis-styles.html"> -->
 <link rel="import" href="css/px-vis-heatmap-styles.html">
@@ -63,7 +64,7 @@
         class="canvas"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
-        margin="[[margin]]"
+        margin="[[_internalMargin]]"
         svg="{{svg}}"
         canvas-context="{{canvasContext}}"
         px-svg-elem="{{pxSvgElem}}">
@@ -73,7 +74,7 @@
         class="canvas"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
-        margin="[[margin]]"
+        margin="[[_internalMargin]]"
         canvas-context="{{overlayCanvasContext}}">
       </px-vis-canvas>
       <!-- scale -->
@@ -86,7 +87,7 @@
         data-extents="[[dataExtents]]"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
-        margin="[[margin]]"
+        margin="[[_internalMargin]]"
         chart-data="[[chartData]]"
         x="{{x}}"
         y="{{y}}"
@@ -99,7 +100,7 @@
         svg="[[layer.1]]"
         axis="[[y]]"
         axis-type="[[yAxisType]]"
-        margin="[[margin]]"
+        margin="[[_internalMargin]]"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
         orientation="left"
@@ -117,7 +118,7 @@
         svg="[[layer.1]]"
         axis="[[x]]"
         axis-type="[[xAxisType]]"
-        margin="[[margin]]"
+        margin="[[_internalMargin]]"
         width="[[_internalWidth]]"
         height="[[_internalHeight]]"
         orientation="bottom"
@@ -154,19 +155,40 @@
         </px-vis-heatmap-cell>
       </template> -->
 
+      <template is="dom-if" if="[[showCustomColumn]]" restamp>
+        <px-vis-heatmap-custom-column
+          border-color="[[cellBorderColor]]"
+          border-width="[[cellBorderWidth]]"
+          text-size="[[cellTextSize]]"
+          text-color="[[cellTextColor]]"
+          svg="[[svg]]"
+          x="[[x]]"
+          y="[[y]]"
+          margin="[[_internalMargin]]"
+          width="[[_internalWidth]]"
+          height="[[_internalHeight]]"
+          chart-extents="[[chartExtents]]"
+          data-extents="[[dataExtents]]"
+          complete-series-config="[[completeSeriesConfig]]"
+          series-key="[[seriesKey]]"
+          domain-changed="[[domainChanged]]">
+        </px-vis-heatmap-custom-column>
+      </template>
+
       <template is="dom-if" if="[[showLegend]]" restamp>
         <px-vis-heatmap-legend
           id="legend"
           svg="[[svg]]"
           x="[[x]]"
           y="[[y]]"
-          margin="[[margin]]"
+          margin="[[_internalMargin]]"
           width="[[_internalWidth]]"
           height="[[_internalHeight]]"
           color-scale="[[_colorScale]]"
           chart-extents="[[chartExtents]]"
           data-extents="[[dataExtents]]"
           orientation="[[_legendOrientation]]"
+          gap-size="[[_legendGapSize]]"
           complete-series-config="[[completeSeriesConfig]]"
           domain-changed="[[domainChanged]]">
         </px-vis-heatmap-legend>
@@ -262,6 +284,44 @@
               'left': 50
             };
           }
+        },
+
+        /**
+         * Toggles an additional column at the end of the cells. Custom columns
+         * are defined by the customColumnData property.
+         */
+        showCustomColumn: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * Sets the configuration and data for the custom column.
+         * This object defines all aspects of the column including labe,
+         * width, and the data.
+         *
+         * Example of customColumnConfig object:
+         *
+         * {
+         *   columnLabel: 'Accuracy',
+         *   columnWidth: 75,
+         *   columnData: [{
+         *     y: 'Asset 1',
+         *     value: 10
+         *   },
+         *   {
+         *     y: 'Asset 2',
+         *     value: 20
+         *   },
+         *   {
+         *     y: 'Asset 3',
+         *     value: 30
+         *   }]
+         *  }
+         */
+        customColumnConfig: {
+          type: Object,
+          value: {}
         },
 
         /**
@@ -421,27 +481,40 @@
           type: Number
         },
 
+        _internalMargin: {
+          type: Object,
+          value: {}
+        },
+
         /**
          * Observe changes to this in order to know when css vars have changed.
          */
         _stylesResolved: {
           type: Boolean,
           value: false
+        },
+
+        _legendGapSize: {
+          type: Number,
+          value: 10
         }
 
       },
 
       observers: [
-        '_drawCells(margin, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale, _stylesResolved)',
+        '_drawCells(_internalMargin.*, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale, _stylesResolved)',
         '_updateDataExtents(chartData, chartData.*, paddingOuter)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
         '_updateSeriesKey(seriesKey)',
         '_updateColorScale(chartData.*, colors.*, domainChanged)',
-        '_updateInternalSize(squareMode, width, height, margin.*)',
+        '_updateInternalSize(squareMode, width, height, _internalMargin.*)',
+        '_updateInternalMargin(showCustomColumn, customColumnConfig, margin.*)',
+        '_updateLegendGapSize(showCustomColumn, customColumnConfig.*, _legendOrientation)',
         '_xAxisConfigChanged(xAxisConfig)',
         '_yAxisConfigChanged(yAxisConfig)',
-        '_legendConfigChanged(legendConfig)',
+        '_legendConfigChanged(showLegend, legendConfig)',
+        '_customColumnConfigChanged(showCustomColumn, customColumnConfig)',
         '_resolveCssVars(_stylesUpdated)'
       ],
 
@@ -503,7 +576,7 @@
         }
       },
 
-      _collapseQueryIsValid(query) {
+      _collapseQueryIsValid: function(query) {
         if (typeof query === 'number') {
           return true;
         }
@@ -513,7 +586,7 @@
         return false;
       },
 
-      _getCollapseQuery(collapseAt) {
+      _getCollapseQuery: function(collapseAt) {
         if (typeof collapseAt === 'number') {
           return collapseAt + 'px';
         }
@@ -522,7 +595,7 @@
         }
       },
 
-      _collapsedChanged() {
+      _collapsedChanged: function() {
         this.set('_legendOrientation', this.collapsed ? 'bottom' : 'right');
       },
 
@@ -680,6 +753,28 @@
         return height;
       },
 
+      _updateInternalMargin: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.debounce('update-internal-margin', function() {
+          const margin = {
+            top: this.margin.top,
+            bottom: this.margin.bottom,
+            left: this.margin.left,
+            right: this.margin.right
+          };
+          // add additional margin for custom column
+          if (this.showCustomColumn) {
+            const customColumn = this._getCustomColumn();
+            if (customColumn && customColumn.columnWidth) {
+              margin.right += customColumn.columnWidth;
+            }
+          }
+          this.set('_internalMargin', margin);
+        }.bind(this), 10);
+      },
+
       _selectedCellChanged: function(selectedCell, prevSelectedCell) {
         // clear overlay canvas
         this.overlayCanvasContext.pxClearCanvas();
@@ -710,6 +805,22 @@
         }
       },
 
+      _updateLegendGapSize: function() {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.debounce('update-legend-gap-size', function() {
+          let gapSize = 20;
+          if (this.showCustomColumn && this._legendOrientation !== 'bottom') {
+            const customColumn = this._getCustomColumn();
+            if (customColumn) {
+              gapSize += customColumn.columnWidth;
+            }
+          }
+          this.set('_legendGapSize', gapSize);
+        }.bind(this), 10);
+      },
+
       _xAxisConfigChanged: function(xAxisConfig) {
         if (this.hasUndefinedArguments(arguments)) {
           return;
@@ -724,20 +835,27 @@
         this._applyConfigToElement(yAxisConfig, this.$.yAxis);
       },
 
-      _legendConfigChanged: function(legendConfig) {
+      _legendConfigChanged: function(showLegend, legendConfig) {
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
         // debouncing because this gets called before dom-if that instantiates legend happens
         this.debounce('legend-config-changed', function() {
-          let legend;
-          if (this.shadowRoot) {
-            legend = this.shadowRoot.querySelector('px-vis-heatmap-legend');
-          } else {
-            legend = Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
-          }
+          const legend = this._getLegend();
           if (legend) {
             this._applyConfigToElement(legendConfig, legend);
+          }
+        }.bind(this), 10);
+      },
+
+      _customColumnConfigChanged: function(showCustomColumn, customColumnConfig) {
+        if (this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.debounce('custom-column-config-changed', function() {
+          const customColumn = this._getCustomColumn();
+          if (customColumn) {
+            this._applyConfigToElement(customColumnConfig, customColumn);
           }
         }.bind(this), 10);
       },
@@ -747,6 +865,14 @@
           return this.shadowRoot.querySelector('px-vis-heatmap-legend');
         } else {
           return Polymer.dom(this.root).querySelector('px-vis-heatmap-legend');
+        }
+      },
+
+      _getCustomColumn: function() {
+        if (this.shadowRoot) {
+          return this.shadowRoot.querySelector('px-vis-heatmap-custom-column');
+        } else {
+          return Polymer.dom(this.root).querySelector('px-vis-heatmap-custom-column');
         }
       },
 
@@ -865,6 +991,10 @@
           const legend = this._getLegend();
           if (legend) {
             legend.updateStyles();
+          }
+          const customColumn = this._getCustomColumn();
+          if (customColumn) {
+            customColumn.updateStyles();
           }
           // notify that style vars have changed
           this.set('_stylesResolved', !this._stylesResolved);

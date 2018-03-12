@@ -1,0 +1,207 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../px-vis/px-vis-scale.html">
+<link rel="import" href="../px-vis/px-vis-svg.html">
+
+<link rel="import" href="../px-vis/px-vis-behavior-colors.html">
+<link rel="import" href="../px-vis/px-vis-behavior-common.html">
+<link rel="import" href="../px-vis/px-vis-behavior-chart.html">
+
+
+<dom-module id="px-vis-heatmap-custom-column">
+  <template>
+
+  </template>
+  <script>
+    Polymer({
+
+      is: 'px-vis-heatmap-custom-column',
+
+      behaviors: [
+        PxVisBehavior.baseSize,
+        PxVisBehavior.chartExtents,
+        PxVisBehavior.commonMethods,
+        PxVisBehavior.completeSeriesConfig,
+        PxVisBehavior.dataExtents,
+        PxVisBehavior.margins,
+        PxVisBehavior.observerCheck,
+        PxVisBehavior.svgDefinition,
+        PxVisBehavior.updateStylesOverride,
+        PxVisBehaviorD3.domainUpdate,
+        PxVisBehaviorChart.subConfiguration
+      ],
+
+      properties: {
+
+        columnData: {
+          type: Array
+        },
+
+        columnLabel: {
+          type: String,
+        },
+
+        columnWidth: {
+          type: Number,
+          value: 100
+        },
+
+        /**
+         * Color of border surrounding legend. Set by series config or css var.
+         */
+        borderColor: {
+          type: String,
+          value: 'black'
+        },
+
+        /**
+         * Width of border surrounding legend. Set by series config or css var.
+         */
+        borderWidth: {
+          type: String,
+          value: '1px'
+        },
+
+        textColor: {
+          type: String,
+          value: 'black'
+        },
+
+        textSize: {
+          type: String,
+          value: '12px'
+        },
+
+        columnLabelTextColor: {
+          type: String
+        },
+
+        columnLabelTextSize: {
+          type: String
+        },
+
+        columnLabelSpacing: {
+          type: Number,
+          value: 15
+        },
+
+        /**
+         * Debounce time before drawing.
+         */
+        drawDebounceTime: {
+          type: Number,
+          value: 100
+        },
+
+        /**
+         * Observe changes to this in order to know when css vars have changed.
+         */
+        _stylesResolved: {
+          type: Boolean,
+          value: false
+        },
+
+        _svgGroup: {
+          type: Object
+        }
+
+      },
+
+      observers: [
+        '_drawElement(columnWidth, columnData.*, columnLabel, borderColor, borderWidth, margin.*, x, y, domainChanged, completeSeriesConfig, seriesKey, _stylesResolved)',
+        '_resolveCssVars(_stylesUpdated)'
+      ],
+
+      detached: function() {
+        // remove gradient and rectangle drawings
+        if (!this._isObjEmpty(this._svgGroup)) {
+          this._svgGroup.remove();
+        }
+      },
+
+      _drawElement: function() {
+        const exts = this.chartExtents || this.dataExtents;
+        if (!exts || this.hasUndefinedArguments(arguments)) {
+          return;
+        }
+        this.debounce('custom-column-drawn-debounce', () => {
+          // remove prev column svg
+          if (!this._isObjEmpty(this._svgGroup)) {
+            this._svgGroup.remove();
+          }
+          // calculate position (using translate transform)
+          const xOffset = this.x(exts.x[exts.x.length - 1]) + this.x.bandwidth();
+          const yOffset = 0;
+          // xOffset maybe invalid if the x function is being updated
+          if (xOffset !== 0 && !xOffset) {
+            return;
+          }
+          const translate = 'translate(' + xOffset + ', ' + yOffset + ')';
+          // create svg group for this column
+          this._svgGroup = this.svg.append('g')
+            .attr('transform', translate);
+          // draw row lines in column
+          exts.y.forEach(function(yVal, i) {
+            const yPos = this.y(yVal);
+            this._appendSvgLine(this._svgGroup, 0, this.columnWidth, yPos, yPos);
+          }.bind(this));
+          // draw values in each row
+          this.columnData.forEach(function(data, i) {
+            const yPos = this.y(data.y) + this.y.bandwidth() / 2;
+            this._appendSvgText(this._svgGroup, this.columnWidth / 2, yPos, data.value,
+              this.textColor, this.textSize);
+          }.bind(this));
+          // manually draw last (bottom) line
+          let yPos = this.y(exts.y[0]) + this.y.bandwidth();
+          this._appendSvgLine(this._svgGroup, 0, this.columnWidth, yPos, yPos);
+          // draw column label
+          if (this.columnLabel) {
+            yPos = this.y(exts.y[0]) + this.y.bandwidth() + this.columnLabelSpacing;
+            this._appendSvgText(this._svgGroup, this.columnWidth / 2, yPos, this.columnLabel,
+              this.columnLabelTextColor, this.columnLabelTextSize);
+          }
+        }, this.drawDebounceTime);
+      },
+
+      _appendSvgLine: function(svg, x1, x2, y1, y2, stroke, strokeWidth) {
+        svg.append('line')
+          .attr('x1', x1)
+          .attr('x2', x2)
+          .attr('y1', y1)
+          .attr('y2', y2)
+          .style('stroke', this.borderColor)
+          .style('stroke-width', this.borderWidth);
+      },
+
+      _appendSvgText: function(svg, x, y, text, textColor, textSize) {
+        svg.append('text')
+          .attr('x', x)
+          .attr('y', y)
+          .text(text)
+          .attr('text-anchor', 'middle')
+          .attr('alignment-baseline', 'middle')
+          .attr('font-size', textSize)
+          .attr('fill', textColor);
+      },
+
+      _resolveCssVars: function() {
+        // TODO: resolve css vars for custom column
+        this.debounce('resolve-css-vars', function() {
+          // get series config obj
+          const seriesConfig = this.completeSeriesConfig || {};
+          const config = seriesConfig[this.seriesKey] || {};
+          // resolve all css vars
+          this.columnLabelTextColor = config.columnLabelTextColor
+            || this._checkThemeVariable('--px-vis-axis-color', 'black');
+          // TODO: sync this size with the axis size
+          this.columnLabelTextSize = config.columnLabelTextColor
+            || this._checkThemeVariable('', '12px');
+          // // notify children
+          // this.$.yAxis.updateStyles();
+          // notify that style vars have changed
+          this.set('_stylesResolved', !this._stylesResolved);
+        }.bind(this), 10);
+      }
+
+    });
+  </script>
+</dom-module>
