@@ -10,6 +10,8 @@
 <link rel="import" href="../px-vis/px-vis-behavior-chart.html">
 <link rel="import" href="../px-vis/px-vis-behavior-d3.html">
 
+<link rel="import" href="px-heatmap-behavior.html">
+
 <link rel="import" href="px-vis-heatmap-cell.html">
 <link rel="import" href="px-vis-heatmap-legend.html">
 <link rel="import" href="px-vis-heatmap-custom-column.html">
@@ -190,6 +192,7 @@
           orientation="[[_legendOrientation]]"
           gap-size="[[_legendGapSize]]"
           complete-series-config="[[completeSeriesConfig]]"
+          series-key="[[seriesKey]]"
           domain-changed="[[domainChanged]]">
         </px-vis-heatmap-legend>
       </template>
@@ -232,7 +235,8 @@
         PxVisBehaviorChart.saveImage,
         PxVisBehaviorChart.subConfiguration,
         PxVisBehaviorD3.canvasContext,
-        PxVisBehaviorD3.svgLower
+        PxVisBehaviorD3.svgLower,
+        PxBehaviorHeatmap.normalizeObjects
       ],
 
       properties: {
@@ -503,11 +507,10 @@
 
       observers: [
         '_drawCells(_internalMargin.*, chartData.*, showCellValue, x, y, domainChanged, completeSeriesConfig, seriesKey, _colorScale, _stylesResolved)',
-        '_updateDataExtents(chartData, chartData.*, paddingOuter)',
+        '_updateDataExtents(chartData, chartData.*, paddingOuter, completeSeriesConfig, seriesKey)',
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
-        '_updateSeriesKey(seriesKey)',
-        '_updateColorScale(chartData.*, colors.*, domainChanged)',
+        '_updateColorScale(chartData.*, colors.*, domainChanged, completeSeriesConfig, seriesKey)',
         '_updateInternalSize(squareMode, width, height, _internalMargin.*)',
         '_updateInternalMargin(showCustomColumn, customColumnConfig, margin.*)',
         '_updateLegendGapSize(showCustomColumn, customColumnConfig.*, _legendOrientation)',
@@ -551,11 +554,13 @@
       },
 
       _drawCell: function(canvasContext, cellData) {
+        const data = this._normalizeChartDataItem(cellData);
         const borderWidth = parseFloat(this.cellBorderWidth.replace('px', ''));
         // draw and fill rectangle
         canvasContext.beginPath();
-        canvasContext.rect(this.x(cellData.x), this.y(cellData.y), this.x.bandwidth(), this.y.bandwidth());
-        canvasContext.fillStyle = this._colorScale(cellData.value);
+        canvasContext.rect(this.x(data.x),
+          this.y(data.y), this.x.bandwidth(), this.y.bandwidth());
+        canvasContext.fillStyle = this._colorScale(data.value);
         canvasContext.fill();
         // draw border
         if (!isNaN(borderWidth) && borderWidth > 0) {
@@ -565,14 +570,14 @@
         }
         // draw value if needed
         if (this.showCellValue) {
-          const xPos = this.x(cellData.x) + this.x.bandwidth() / 2;
-          const yPos = this.y(cellData.y) + this.y.bandwidth() / 2;
+          const xPos = this.x(data.x) + this.x.bandwidth() / 2;
+          const yPos = this.y(data.y) + this.y.bandwidth() / 2;
           canvasContext.beginPath();
           canvasContext.font = this.cellTextSize + ' Arial';
           canvasContext.fillStyle = this.cellTextColor;
           canvasContext.textAlign = 'center';
           canvasContext.textBaseline = 'middle';
-          canvasContext.fillText(cellData.value, xPos, yPos, this.x.bandwidth());
+          canvasContext.fillText(data.value, xPos, yPos, this.x.bandwidth());
         }
       },
 
@@ -612,14 +617,16 @@
       },
 
       _updateDataExtents: function() {
-        if (!this.chartData || !this.x || !this.y) {
+        if (!this.chartData || !this.x || !this.y || !this.completeSeriesConfig || !this.seriesKey) {
           return;
         }
-        this.dataExtents = this._calcExtents(this.chartData);
-        if (this.x && this.y) {
-          this.x.paddingOuter(this.paddingOuter);
-          this.y.paddingOuter(this.paddingOuter);
-        }
+        this.debounce('update-data-extents', function() {
+          this.dataExtents = this._calcExtents(this.chartData);
+          if (this.x && this.y) {
+            this.x.paddingOuter(this.paddingOuter);
+            this.y.paddingOuter(this.paddingOuter);
+          }
+        }.bind(this), 10);
       },
 
       /**
@@ -627,20 +634,22 @@
        * values found in the chart data.
        */
       _calcExtents: function(chartData) {
-        const exts = {
-          x: [],
-          y: [],
-          value: [Infinity, -Infinity]
-        };
-        chartData.forEach((data) => {
-          if (exts.x.indexOf(data.x) < 0) {
-            exts.x.push(data.x);
+        const exts = {};
+        exts[this.completeSeriesConfig[this.seriesKey].x] = [];
+        exts[this.completeSeriesConfig[this.seriesKey].y] = [];
+        exts[this.completeSeriesConfig[this.seriesKey].value] = [Infinity, -Infinity];
+        chartData.forEach((cellData) => {
+          const data = this._normalizeChartDataItem(cellData);
+          if (exts[this.completeSeriesConfig[this.seriesKey].x].indexOf(data.x) < 0) {
+            exts[this.completeSeriesConfig[this.seriesKey].x].push(data.x);
           }
-          if (exts.y.indexOf(data.y) < 0) {
-            exts.y.push(data.y);
+          if (exts[this.completeSeriesConfig[this.seriesKey].y].indexOf(data.y) < 0) {
+            exts[this.completeSeriesConfig[this.seriesKey].y].push(data.y);
           }
-          exts.value[0] = Math.min(exts.value[0], data.value);
-          exts.value[1] = Math.max(exts.value[1], data.value);
+          exts[this.completeSeriesConfig[this.seriesKey].value][0]
+            = Math.min(exts[this.completeSeriesConfig[this.seriesKey].value][0], data.value);
+          exts[this.completeSeriesConfig[this.seriesKey].value][1]
+            = Math.max(exts[this.completeSeriesConfig[this.seriesKey].value][1], data.value);
         });
         return exts;
       },
@@ -679,42 +688,26 @@
         }, 10);
       },
 
-      _updateSeriesKey: function() {
+      _updateColorScale: function() {
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        let cells;
-        if (this.shadowRoot) {
-          cells = this.shadowRoot.querySelectorAll('px-vis-heatmap-cell');
-        } else {
-          cells = Polymer.dom(this.root).querySelectorAll('px-vis-heatmap-cell');
-        }
-        cells.forEach((cell) => cell.seriesKey = this.seriesKey);
-      },
-
-      _updateColorScale: function() {
-        if (!this.dataExtents && !this.chartExtents) {
-          return;
-        }
-        if (!this.colors || this.colors.length < 1) {
-          return;
-        }
-        // get chart min and max values
-        const exts = this.chartExtents || this.dataExtents;
-        if (!exts.value) {
-          return;
-        }
-        // calculate the value threshold for each color
-        const valueThresholds = [];
-        const rangePerColor = (exts.value[1] - exts.value[0]) / (this.colors.length - 1);
-        for (let i = 0; i < this.colors.length; i++) {
-          valueThresholds.push(exts.value[0] + rangePerColor * i);
-        }
-        // in case of rounding limitations, manually set last value to our max
-        valueThresholds[valueThresholds.length - 1] = exts.value[1];
-        this.set('_colorScale', Px.d3.scaleLinear()
-          .domain(valueThresholds)
-          .range(this.colors));
+        this.debounce('update-color-scale', function() {
+          // get chart min and max values
+          let exts = this.chartExtents || this.dataExtents;
+          exts = this._normalizeExtentsObj(exts);
+          // calculate the value threshold for each color
+          const valueThresholds = [];
+          const rangePerColor = (exts.value[1] - exts.value[0]) / (this.colors.length - 1);
+          for (let i = 0; i < this.colors.length; i++) {
+            valueThresholds.push(exts.value[0] + rangePerColor * i);
+          }
+          // in case of rounding limitations, manually set last value to our max
+          valueThresholds[valueThresholds.length - 1] = exts.value[1];
+          this.set('_colorScale', Px.d3.scaleLinear()
+            .domain(valueThresholds)
+            .range(this.colors));
+        }.bind(this), 10);
       },
 
       _updateInternalSize: function() {
@@ -922,9 +915,10 @@
        */
       _getCellByPosition: function(xPos, yPos) {
         let cell;
-        this.chartData.forEach((item) => {
-          if (item.x === xPos && item.y === yPos) {
-            cell = item;
+        this.chartData.forEach((cellData) => {
+          const data = this._normalizeChartDataItem(cellData);
+          if (data.x === xPos && data.y === yPos) {
+            cell = cellData;
           }
         });
         return cell;
@@ -943,11 +937,12 @@
         this._closeTooltip();
       },
 
-      _showTooltip: function(cell, msg) {
+      _showTooltip: function(cellData, msg) {
         const tooltipMarginBottom = -20;
+        const data = this._normalizeChartDataItem(cellData);
         // get absolute position for tooltip
-        const x = this.x(cell.x) + this.margin.left + this.x.bandwidth() / 2;
-        const y = this.y(cell.y) - tooltipMarginBottom;
+        const x = this.x(data.x) + this.margin.left + this.x.bandwidth() / 2;
+        const y = this.y(data.y) - tooltipMarginBottom;
         this.$.tooltipDiv.style.left = x + 'px';
         // this.$.tooltipDiv.style.left = 0;
         this.$.tooltipDiv.style.top = y + 'px';
@@ -960,12 +955,13 @@
         this.$.tooltip.opened = false;
       },
 
-      _createTooltipMessage: function(cell) {
+      _createTooltipMessage: function(cellData) {
+        const data = this._normalizeChartDataItem(cellData);
         let msg = '<h1 style="text-weight:bold;font-size:125%;">';
-        msg += 'Asset ' + cell.x + ', ' + cell.y;
+        msg += 'Asset ' + data.x + ', ' + data.y;
         msg += '</h1>';
         // use parseFloat to be safe of XSS
-        msg += cell.value;
+        msg += data.value;
         return msg;
       },
 

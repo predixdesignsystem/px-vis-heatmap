@@ -1,0 +1,43 @@
+<script>
+var PxBehaviorHeatmap = window.PxBehaviorHeatmap = (window.PxBehaviorHeatmap || {});
+
+/*
+    Name:
+    PxBehaviorHeatmap.normalizeObjects
+
+    Description:
+    Behavior providing a convenience function for normalizing objects
+    an expected format using the completeSeriesConfig object.
+
+    @polymerBehavior PxBehaviorHeatmap.normalizeObjects
+*/
+PxBehaviorHeatmap.normalizeObjects = {
+
+  /**
+   * Convenience method for applying completeSeriesConfig keys to a
+   * chartData item and returning an object with standard
+   * heatmap data keys (x, y, and value).
+   */
+  _normalizeChartDataItem: function(dataItem) {
+    return {
+      x: dataItem[this.completeSeriesConfig[this.seriesKey].x],
+      y: dataItem[this.completeSeriesConfig[this.seriesKey].y],
+      value: dataItem[this.completeSeriesConfig[this.seriesKey].value]
+    };
+  },
+
+  /**
+   * Convenience method for applying completeSeriesConfig keys to a
+   * extents item (dataExtents or chartExtents) and returning an object with standard
+   * heatmap data keys (x, y, and value).
+   */
+  _normalizeExtentsObj: function(exts) {
+    return {
+      x: exts[this.completeSeriesConfig[this.seriesKey].x],
+      y: exts[this.completeSeriesConfig[this.seriesKey].y],
+      value: exts[this.completeSeriesConfig[this.seriesKey].value]
+    };
+  }
+
+};
+</script>

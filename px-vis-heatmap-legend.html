@@ -7,6 +7,8 @@
 <link rel="import" href="../px-vis/px-vis-behavior-common.html">
 <link rel="import" href="../px-vis/px-vis-behavior-chart.html">
 
+<link rel="import" href="px-heatmap-behavior.html">
+
 
 <dom-module id="px-vis-heatmap-legend">
   <template>
@@ -63,7 +65,8 @@
         PxVisBehavior.updateStylesOverride,
         PxVisBehaviorD3.domainUpdate,
         PxVisBehaviorChart.axisConfigs,
-        PxVisBehaviorChart.subConfiguration
+        PxVisBehaviorChart.subConfiguration,
+        PxBehaviorHeatmap.normalizeObjects
       ],
 
       properties: {
@@ -308,10 +311,11 @@
       },
 
       _updateRectangePosition: function() {
-        const exts = this.chartExtents || this.dataExtents;
+        let exts = this.chartExtents || this.dataExtents;
         if (!exts || this.hasUndefinedArguments(arguments)) {
           return;
         }
+        exts = this._normalizeExtentsObj(exts);
 
         let height;
         let xOffset;
