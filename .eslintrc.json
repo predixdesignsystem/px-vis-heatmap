@@ -16,6 +16,7 @@
     "PxVisBehavior": false,
     "PxVisBehaviorChart": false,
     "PxVisBehaviorD3": false,
+    "PxBehaviorHeatmap": false,
     "Vaadin": false
   },
   "rules": {
