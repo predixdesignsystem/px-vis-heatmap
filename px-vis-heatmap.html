@@ -478,11 +478,13 @@
         },
 
         _internalWidth: {
-          type: Number
+          type: Number,
+          value: 500
         },
 
         _internalHeight: {
-          type: Number
+          type: Number,
+          value: 500
         },
 
         _internalMargin: {
@@ -511,7 +513,7 @@
         '_updateSeriesConfig(seriesConfig)',
         '_updateSeriesConfig(_colorsAreSet)',
         '_updateColorScale(chartData.*, colors.*, domainChanged, completeSeriesConfig, seriesKey)',
-        '_updateInternalSize(squareMode, width, height, _internalMargin.*)',
+        '_updateInternalSize(chartData, chartData.*, squareMode, width, height, _internalMargin, _internalMargin.*, completeSeriesConfig, seriesKey)',
         '_updateInternalMargin(showCustomColumn, customColumnConfig, margin.*)',
         '_updateLegendGapSize(showCustomColumn, customColumnConfig.*, _legendOrientation)',
         '_xAxisConfigChanged(xAxisConfig)',
@@ -531,6 +533,38 @@
         this.xAxisType = 'scaleBand';
         this.yAxisType = 'scaleBand';
         this.tooltipContent = this.$.tooltip.querySelector('#tooltipContent');
+      },
+
+      // TODO: remove this over-ride when getImage doesn't use this.height and this.width
+      /**
+       * Takes a graphic "snapshot" of the component and pass results through a callback:
+       * - a canvas containing the graphical snapshot
+       * - a png base 64 data uri
+       *
+       * callback object:
+       * {
+       *  canvas: theCanvasObject
+       *  image: "data:image/png;base64;iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACN..."
+       * }
+       *
+       * the data uri can be used to save the image and the canvas object to do
+       * further processing, such as combining different elements snapshot into one image
+       *
+       */
+      getImage: function(callback, renderLegend) {
+        const originalHeight = this.height;
+        const originalWidth = this.width;
+        this.set('width', this._internalWidth);
+        this.set('height', this._internalHeight);
+        const getImageFunc = PxVisBehaviorChart.saveImage[0].getImage
+          || PxVisBehaviorChart.saveImage[1].getImage;
+        getImageFunc.call(this, function(canvas, image) {
+          this.set('width', originalWidth);
+          this.set('height', originalHeight);
+          if (callback) {
+            return callback(canvas, image);
+          }
+        }.bind(this), renderLegend);
       },
 
       _drawCells: function() {
@@ -714,36 +748,27 @@
         if (this.hasUndefinedArguments(arguments)) {
           return;
         }
-        this.set('_internalWidth', this._getInternalWidth());
-        this.set('_internalHeight', this._getInternalHeight());
-      },
-
-      _getInternalWidth: function() {
-        let width = this.width;
-        // in squareMode we need the both axis to be equal length
-        if (this.squareMode) {
-          const axisWidth = this.width - this.margin.left - this.margin.right;
-          const axisHeight = this.height - this.margin.top - this.margin.bottom;
-          // if the width is too large, subtract the difference to make them equal
-          if (axisWidth > axisHeight) {
-            width -= (axisWidth - axisHeight);
+        this.debounce('update-internal-size', function() {
+          let width = this.width;
+          let height = this.height;
+          let exts = this.chartExtents || this.dataExtents;
+          exts = this._normalizeExtentsObj(exts);
+          // in squareMode we need each cell to have equal height and width
+          if (this.squareMode) {
+            let widthPadding = this.margin.left + this.margin.right;
+            if (this.showCustomColumn) {
+              widthPadding += this._getCustomColumn().columnWidth;
+            }
+            const heightPadding = this.margin.top + this.margin.bottom;
+            const cellHeight = (this.height - heightPadding) / exts.y.length;
+            const cellWidth = (this.width - widthPadding) / exts.x.length;
+            const minLength = Math.min(cellHeight, cellWidth);
+            width = minLength * exts.x.length + widthPadding;
+            height = minLength * exts.y.length + heightPadding;
           }
-        }
-        return width;
-      },
-
-      _getInternalHeight: function() {
-        let height = this.height;
-        // in squareMode we need the both axis to be equal length
-        if (this.squareMode) {
-          const axisWidth = this.width - this.margin.left - this.margin.right;
-          const axisHeight = this.height - this.margin.top - this.margin.bottom;
-          // if the width is too large, subtract the difference to make them equal
-          if (axisHeight > axisWidth) {
-            height -= (axisHeight - axisWidth);
-          }
-        }
-        return height;
+          this.set('_internalWidth', width);
+          this.set('_internalHeight', height);
+        }.bind(this), 10);
       },
 
       _updateInternalMargin: function() {

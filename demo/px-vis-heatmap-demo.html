@@ -530,14 +530,19 @@
 
     _export: function() {
       const chart = this._getChart();
-      const modal = this.shadowRoot.querySelector('px-modal');
+      let modal;
+      if (this.shadowRoot) {
+        modal = this.shadowRoot.querySelector('px-modal');
+      } else {
+        modal = Polymer.dom(this.root).querySelector('px-modal');
+      }
       chart.getImage((data) => {
         if (this._img) {
           this.$.exportedImageContainer.removeChild(this._img);
         }
         this._img = document.createElement('img');
         this._img.src = data.image;
-        this.$.exportedImageContainer.append(this._img);
+        this.$.exportedImageContainer.appendChild(this._img);
         modal.opened = true;
       });
     }
