@@ -146,19 +146,22 @@
             chartData: this._generateCorrelationChartData(10, 10),
             chartExtents: this._generateChartExtents(10, 10),
             showCustomColumn: false,
-            customColumnConfig: undefined
+            customColumnConfig: undefined,
+            seriesConfig: this._generateSeriesConfig(['#d1c701', '#7bbc00', '#4782a8'])
           }, {
             configName: 'Half Correlation Plot',
             chartData: this._generateHalfCorrelationChartData(10, 10),
             chartExtents: this._generateChartExtents(10, 10),
             showCustomColumn: false,
-            customColumnConfig: undefined
+            customColumnConfig: undefined,
+            seriesConfig: this._generateSeriesConfig(['#d1c701', '#7bbc00', '#4782a8'])
           }, {
             configName: 'Confusion Matrix',
             chartData: this._generateCorrelationChartData(10, 10),
             chartExtents: this._generateChartExtents(10, 10),
             showCustomColumn: true,
-            customColumnConfig: this._generateCustomColumnConfig(10)
+            customColumnConfig: this._generateCustomColumnConfig(10),
+            seriesConfig: this._generateSeriesConfig(['#fff', '#4881a9'])
           }];
         }
       },
@@ -508,6 +511,21 @@
         exts.asset.push('Asset ' + i);
       }
       return exts;
+    },
+
+    _generateSeriesConfig: function(colors) {
+      const config = {
+        'series1': {
+          'name': 'Series 1',
+          'x': 'time',
+          'y': 'asset',
+          'value': 'temp'
+        }
+      };
+      if (colors) {
+        config['series1'].colors = colors;
+      }
+      return config;
     },
 
     _collapsedChanged: function(e, details) {
