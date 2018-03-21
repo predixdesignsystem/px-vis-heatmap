@@ -141,6 +141,24 @@
           return [{
             configName: 'Default',
             configReset: true
+          }, {
+            configName: 'Correlation Plot',
+            chartData: this._generateCorrelationChartData(10, 10),
+            chartExtents: this._generateChartExtents(10, 10),
+            showCustomColumn: false,
+            customColumnConfig: undefined
+          }, {
+            configName: 'Half Correlation Plot',
+            chartData: this._generateHalfCorrelationChartData(10, 10),
+            chartExtents: this._generateChartExtents(10, 10),
+            showCustomColumn: false,
+            customColumnConfig: undefined
+          }, {
+            configName: 'Confusion Matrix',
+            chartData: this._generateCorrelationChartData(10, 10),
+            chartExtents: this._generateChartExtents(10, 10),
+            showCustomColumn: true,
+            customColumnConfig: this._generateCustomColumnConfig(10)
           }];
         }
       },
@@ -283,30 +301,13 @@
       showCustomColumn: {
         type: Boolean,
         inputType: 'toggle',
-        defaultValue: true
+        defaultValue: false
       },
 
       customColumnConfig: {
         type: Object,
         inputType: 'code:JSON',
-        defaultValue: {
-          columnLabel: 'Accuracy',
-          columnWidth: 75,
-          columnData: [
-            {
-              y: 'Asset 1',
-              value: 10
-            },
-            {
-              y: 'Asset 2',
-              value: 20
-            },
-            {
-              y: 'Asset 3',
-              value: 30
-            }
-          ]
-        }
+        defaultValue: {}
       },
 
       scalePadding: {
@@ -393,9 +394,7 @@
       const xSize = Number.parseInt(this.$.xSize.value);
       const ySize = Number.parseInt(this.$.ySize.value);
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
-        // update extents
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
-        // update data
         chart.set('chartData', this._generateData(xSize, ySize, true));
       }
     },
@@ -405,9 +404,7 @@
       const xSize = Number.parseInt(this.$.xSize.value);
       const ySize = Number.parseInt(this.$.ySize.value);
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
-        // update extents
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
-        // update data
         chart.set('chartData', this._generateData(xSize, ySize, false));
       }
     },
@@ -417,22 +414,8 @@
       const xSize = 10;
       const ySize = 10;
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
-        // update extents
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
-        // update data
-        const data = [];
-        for (let x = 0; x < xSize; x++) {
-          for (let y = 0; y < ySize; y++) {
-            // increase values in a diaganol pattern
-            const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
-            data.push({
-              time: x + ':00',
-              asset: 'Asset ' + y,
-              temp: Math.round(100 * power)
-            });
-          }
-        }
-        chart.set('chartData', data);
+        chart.set('chartData', this._generateCorrelationChartData(xSize, ySize));
       }
     },
 
@@ -441,25 +424,8 @@
       const xSize = 10;
       const ySize = 10;
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
-        // update extents
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
-        // update data
-        const data = [];
-        for (let x = 0; x < xSize; x++) {
-          for (let y = 0; y < ySize; y++) {
-            if (y > x) {
-              continue;
-            }
-            // increase values in a diaganol pattern
-            const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
-            data.push({
-              time: x + ':00',
-              asset: 'Asset ' + y,
-              temp: Math.round(100 * power)
-            });
-          }
-        }
-        chart.set('chartData', data);
+        chart.set('chartData', this._generateHalfCorrelationChartData(xSize, ySize));
       }
     },
 
@@ -477,6 +443,56 @@
         }
       }
       return data;
+    },
+
+    _generateCorrelationChartData: function(xSize, ySize) {
+      const data = [];
+      for (let x = 0; x < xSize; x++) {
+        for (let y = 0; y < ySize; y++) {
+          // increase values in a diaganol pattern
+          const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
+          data.push({
+            time: x + ':00',
+            asset: 'Asset ' + y,
+            temp: Math.round(100 * power)
+          });
+        }
+      }
+      return data;
+    },
+
+    _generateHalfCorrelationChartData: function(xSize, ySize) {
+      const data = [];
+      for (let x = 0; x < xSize; x++) {
+        for (let y = 0; y < ySize; y++) {
+          if (y > x) {
+            continue;
+          }
+          // increase values in a diaganol pattern
+          const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
+          data.push({
+            time: x + ':00',
+            asset: 'Asset ' + y,
+            temp: Math.round(100 * power)
+          });
+        }
+      }
+      return data;
+    },
+
+    _generateCustomColumnConfig: function(ySize) {
+      const config = {
+        columnLabel: 'Accuracy',
+        columnWidth: 75,
+        columnData: []
+      };
+      for (let i = 0; i < ySize; i++) {
+        config.columnData.push({
+          y: 'Asset ' + i,
+          value: 10 * i
+        });
+      }
+      return config;
     },
 
     _generateChartExtents: function(xNum, yNum) {
