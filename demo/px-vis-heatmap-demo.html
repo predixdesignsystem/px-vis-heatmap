@@ -138,27 +138,28 @@
       configs: {
         type: Array,
         value: function() {
+          const showDataAsGradient = false;
           return [{
             configName: 'Default',
             configReset: true
           }, {
             configName: 'Correlation Plot',
-            chartData: this._generateCorrelationChartData(10, 10),
-            chartExtents: this._generateChartExtents(10, 10),
+            chartData: this._generateCorrelationChartData(10, 10, showDataAsGradient, false, -1, 1),
+            chartExtents: this._generateChartExtents(10, 10, -1, 1),
             showCustomColumn: false,
             customColumnConfig: undefined,
             seriesConfig: this._generateSeriesConfig(['#d1c701', '#7bbc00', '#4782a8'])
           }, {
             configName: 'Half Correlation Plot',
-            chartData: this._generateHalfCorrelationChartData(10, 10),
-            chartExtents: this._generateChartExtents(10, 10),
+            chartData: this._generateCorrelationChartData(10, 10, showDataAsGradient, true, -1, 1),
+            chartExtents: this._generateChartExtents(10, 10, -1, 1),
             showCustomColumn: false,
             customColumnConfig: undefined,
             seriesConfig: this._generateSeriesConfig(['#d1c701', '#7bbc00', '#4782a8'])
           }, {
             configName: 'Confusion Matrix',
-            chartData: this._generateCorrelationChartData(10, 10),
-            chartExtents: this._generateChartExtents(10, 10),
+            chartData: this._generateCorrelationChartData(10, 10, showDataAsGradient, false, 0, 100),
+            chartExtents: this._generateChartExtents(10, 10, 0, 100),
             showCustomColumn: true,
             customColumnConfig: this._generateCustomColumnConfig(10),
             seriesConfig: this._generateSeriesConfig(['#fff', '#4881a9'])
@@ -428,7 +429,7 @@
       const ySize = 10;
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
-        chart.set('chartData', this._generateHalfCorrelationChartData(xSize, ySize));
+        chart.set('chartData', this._generateCorrelationChartData(xSize, ySize, true, true));
       }
     },
 
@@ -448,35 +449,34 @@
       return data;
     },
 
-    _generateCorrelationChartData: function(xSize, ySize) {
+    _generateCorrelationChartData: function(xSize, ySize, isGradient, isHalfCorrelation, minVal, maxVal) {
+      minVal = minVal !== undefined ? minVal : 0;
+      maxVal = maxVal !== undefined ? maxVal : 100;
+      const useRounding = (maxVal - minVal > 5) ? true : false;
+      const powerMax = 0.75; // cap data value at 75% in order to make the correlation line standout
       const data = [];
       for (let x = 0; x < xSize; x++) {
         for (let y = 0; y < ySize; y++) {
-          // increase values in a diaganol pattern
-          const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
-          data.push({
-            time: x + ':00',
-            asset: 'Asset ' + y,
-            temp: Math.round(100 * power)
-          });
-        }
-      }
-      return data;
-    },
-
-    _generateHalfCorrelationChartData: function(xSize, ySize) {
-      const data = [];
-      for (let x = 0; x < xSize; x++) {
-        for (let y = 0; y < ySize; y++) {
-          if (y > x) {
+          if (isHalfCorrelation && y > x) {
             continue;
           }
-          // increase values in a diaganol pattern
-          const power = x === y ? 1 : (x + y) / (xSize + ySize - 2);
+          let power;
+          if (x === y) {
+            // middle values should be the max value
+            power = 1;
+          } else if (isGradient) {
+            // increase values in a diaganol pattern
+            power = (x + y) / (xSize + ySize - 2);
+          } else {
+            // use random value
+            power = Math.random();
+            power = Math.min(powerMax, power);
+          }
+          const tempValue = minVal + (maxVal - minVal) * power;
           data.push({
             time: x + ':00',
             asset: 'Asset ' + y,
-            temp: Math.round(100 * power)
+            temp: useRounding ? Math.round(tempValue) : tempValue
           });
         }
       }
@@ -498,11 +498,13 @@
       return config;
     },
 
-    _generateChartExtents: function(xNum, yNum) {
+    _generateChartExtents: function(xNum, yNum, minVal, maxVal) {
+      minVal = minVal !== undefined ? minVal : 0;
+      maxVal = maxVal !== undefined ? maxVal : 100;
       const exts = {
         time: [],
         asset: [],
-        temp: [0, 100]
+        temp: [minVal, maxVal]
       };
       for (let i = 0; i < xNum; i++) {
         exts.time.push(i + ':00');
