@@ -141,9 +141,13 @@
           const showDataAsGradient = false;
           return [{
             configName: 'Default',
-            configReset: true
+            configReset: true,
+            chartData: this._generateData(10, 10, showDataAsGradient, -100, 100),
+            chartExtents: this._generateChartExtents(10, 10, -100, 100),
+            showCustomColumn: false
           }, {
             configName: 'Correlation Plot',
+            configReset: true,
             chartData: this._generateCorrelationChartData(10, 10, showDataAsGradient, false, -1, 1),
             chartExtents: this._generateChartExtents(10, 10, -1, 1),
             showCustomColumn: false,
@@ -151,6 +155,7 @@
             seriesConfig: this._generateSeriesConfig(['#d1c701', '#7bbc00', '#4782a8'])
           }, {
             configName: 'Half Correlation Plot',
+            configReset: true,
             chartData: this._generateCorrelationChartData(10, 10, showDataAsGradient, true, -1, 1),
             chartExtents: this._generateChartExtents(10, 10, -1, 1),
             showCustomColumn: false,
@@ -158,6 +163,7 @@
             seriesConfig: this._generateSeriesConfig(['#d1c701', '#7bbc00', '#4782a8'])
           }, {
             configName: 'Confusion Matrix',
+            configReset: true,
             chartData: this._generateCorrelationChartData(10, 10, showDataAsGradient, false, 0, 100),
             chartExtents: this._generateChartExtents(10, 10, 0, 100),
             showCustomColumn: true,
@@ -170,6 +176,14 @@
       eventMessage: {
         type: String
       }
+    },
+
+    ready: function() {
+      // required to force default config props to get set
+      const configEl = this.shadowRoot
+        ? this.shadowRoot.querySelector('px-demo-configs')
+        : Polymer.dom(this.root).querySelector('px-demo-configs');
+      configEl.chosenConfig = this.configs[0];
     },
 
     /**
@@ -399,7 +413,7 @@
       const ySize = Number.parseInt(this.$.ySize.value);
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
-        chart.set('chartData', this._generateData(xSize, ySize, true));
+        chart.set('chartData', this._generateData(xSize, ySize, true, 0, 100));
       }
     },
 
@@ -409,7 +423,7 @@
       const ySize = Number.parseInt(this.$.ySize.value);
       if (Number.isInteger(xSize) && Number.isInteger(ySize)) {
         chart.set('chartExtents', this._generateChartExtents(xSize, ySize));
-        chart.set('chartData', this._generateData(xSize, ySize, false));
+        chart.set('chartData', this._generateData(xSize, ySize, false, 0, 100));
       }
     },
 
@@ -433,7 +447,9 @@
       }
     },
 
-    _generateData: function(xNum, yNum, isGradient) {
+    _generateData: function(xNum, yNum, isGradient, minVal, maxVal) {
+      minVal = minVal !== undefined ? minVal : 0;
+      maxVal = maxVal !== undefined ? maxVal : 100;
       const data = [];
       for (let x = 0; x < xNum; x++) {
         for (let y = 0; y < yNum; y++) {
@@ -442,7 +458,7 @@
           data.push({
             time: x + ':00',
             asset: 'Asset ' + y,
-            temp: Math.round(100 * power)
+            temp: Math.round(minVal + (maxVal - minVal) * power)
           });
         }
       }
