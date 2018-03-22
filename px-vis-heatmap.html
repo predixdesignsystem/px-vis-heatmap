@@ -828,7 +828,8 @@
           return;
         }
         this.debounce('update-legend-gap-size', function() {
-          let gapSize = 20;
+          const legendConfig = this.legendConfig || {};
+          let gapSize = legendConfig.gapSize !== undefined ? legendConfig.gapSize : 15;
           if (this.showCustomColumn && this._legendOrientation !== 'bottom') {
             const customColumn = this._getCustomColumn();
             if (customColumn) {

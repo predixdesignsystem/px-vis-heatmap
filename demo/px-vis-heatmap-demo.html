@@ -356,7 +356,10 @@
         type: Object,
         inputType: 'code:JSON',
         defaultValue: {
-          orientation: 'right'
+          orientation: 'right',
+          yAxisConfig: {
+            tickSizeInner: 1 // ~5px
+          }
         }
       },
 
@@ -372,7 +375,8 @@
         defaultValue: {
           title: 'Time',
           orientation: 'bottom',
-          labelPosition: 'center'
+          labelPosition: 'center',
+          tickSizeInner: 7 // ~10px
         }
       },
 
@@ -382,7 +386,8 @@
         defaultValue: {
           title: 'Asset',
           orientation: 'left',
-          labelPosition: 'center'
+          labelPosition: 'center',
+          tickSizeInner: 7 // ~10px
         }
       },
 
