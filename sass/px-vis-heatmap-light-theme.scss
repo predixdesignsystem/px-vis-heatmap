@@ -32,4 +32,12 @@ html {
   // heatmap legend
   --px-vis-heatmap-legend-border-color: $gray3;
   --px-vis-heatmap-legend-border-width: 1px;
+
+  // custom column
+  --px-vis-heatmap-custom-column-text-color: $grey10;
+  --px-vis-heatmap-custom-column-text-size: 12px;
+  --px-vis-heatmap-custom-column-label-text-color: $grey10;
+  --px-vis-heatmap-custom-column-label-text-size: 12px;
+  --px-vis-heatmap-custom-column-border-color: $gray3;
+  --px-vis-heatmap-custom-column-border-width: 1px;
 }

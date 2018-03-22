@@ -35,14 +35,38 @@
 
       properties: {
 
+        /**
+         * Array containing values to show in the custom column.
+         * Each object in the array must contain a the y-axis
+         * value to align with and a value to display.
+         *
+         * ```
+         * [{
+         *   y: 'Asset 1',
+         *   value: 20
+         *  }, {
+         *   y: 'Asset 2',
+         *   value: 24
+         * }, {
+         *   y: 'Asset 3',
+         *   value: 40
+         * }]
+         * ```
+         */
         columnData: {
           type: Array
         },
 
+        /**
+         * Label text that is shown on the x-axis.
+         */
         columnLabel: {
           type: String,
         },
 
+        /**
+         * Width of the column in px.
+         */
         columnWidth: {
           type: Number,
           value: 100
@@ -64,24 +88,39 @@
           value: '1px'
         },
 
+        /**
+         * Text color of the cell values. Set by series config or css var.
+         */
         textColor: {
           type: String,
           value: 'black'
         },
 
+        /**
+         * Text size of the cell values. Set by series config or css var.
+         */
         textSize: {
           type: String,
           value: '12px'
         },
 
+        /**
+         * Text color of the axis label. Set by series config or css var.
+         */
         columnLabelTextColor: {
           type: String
         },
 
+        /**
+         * Text size of the axis label. Set by series config or css var.
+         */
         columnLabelTextSize: {
           type: String
         },
 
+        /**
+         * Distance the axis label from axis. Set by series config or css var.
+         */
         columnLabelSpacing: {
           type: Number,
           value: 15
@@ -188,19 +227,23 @@
       },
 
       _resolveCssVars: function() {
-        // TODO: resolve css vars for custom column
         this.debounce('resolve-css-vars', function() {
           // get series config obj
           const seriesConfig = this.completeSeriesConfig || {};
           const config = seriesConfig[this.seriesKey] || {};
           // resolve all css vars
+          this.borderColor = config.borderColor
+            || this._checkThemeVariable('--px-vis-heatmap-custom-column-border-color', 'red');
+          this.borderWidth = config.borderWidth
+            || this._checkThemeVariable('--px-vis-heatmap-custom-column-border-width', '10px');
+          this.textColor = config.textColor
+            || this._checkThemeVariable('--px-vis-heatmap-custom-column-text-color', 'black');
+          this.textSize = config.textSize
+            || this._checkThemeVariable('--px-vis-heatmap-custom-column-text-size', '12px');
           this.columnLabelTextColor = config.columnLabelTextColor
-            || this._checkThemeVariable('--px-vis-axis-color', 'black');
-          // TODO: sync this size with the axis size
+            || this._checkThemeVariable('--px-vis-heatmap-custom-column-label-text-color', 'black');
           this.columnLabelTextSize = config.columnLabelTextColor
-            || this._checkThemeVariable('', '12px');
-          // // notify children
-          // this.$.yAxis.updateStyles();
+            || this._checkThemeVariable('--px-vis-heatmap-custom-column-label-text-size', '12px');
           // notify that style vars have changed
           this.set('_stylesResolved', !this._stylesResolved);
         }.bind(this), 10);
