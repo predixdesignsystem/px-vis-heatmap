@@ -201,12 +201,13 @@
 
     <!-- tooltip -->
     <px-tooltip
-      id="tooltip"
-      for="tooltipDiv"
-      orientation="top"
-      delay="[[tooltipDelay]]"
-      ignore-target-events>
-      <div id="tooltipContent"></div>
+        id="tooltip"
+        for="tooltipDiv"
+        orientation="top"
+        delay="[[tooltipDelay]]"
+        ignore-target-events>
+      <!-- setting margin to -3px in order to get a rough 20px padding -->
+      <div id="tooltipContent" style="margin:-3px;"></div>
     </px-tooltip>
   </template>
   <script>
@@ -983,11 +984,11 @@
 
       _createTooltipMessage: function(cellData) {
         const data = this._normalizeChartDataItem(cellData);
-        let msg = '<h1 style="text-weight:bold;font-size:125%;">';
-        msg += 'Asset ' + data.x + ', ' + data.y;
+        let msg = '<h1 style="text-weight:bold;font-size:12px;margin:0;">';
+        msg += data.y + ', ' + data.x;
         msg += '</h1>';
         // use parseFloat to be safe of XSS
-        msg += data.value;
+        msg += '<span style="font-size:12px;">' + data.value + '</span>';
         return msg;
       },
 
