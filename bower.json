@@ -61,5 +61,6 @@
         "polymer": "^2.4.0-rc.1"
       }
     }
-  }
+  },
+  "license": "Apache-2.0"
 }
