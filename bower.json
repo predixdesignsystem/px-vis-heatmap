@@ -1,6 +1,6 @@
 {
   "name": "px-vis-heatmap",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": [
     "px-vis-heatmap.html"
   ],
@@ -22,7 +22,7 @@
   ],
   "dependencies": {
     "polymer": "#1.9 - 2",
-    "px-vis": "register",
+    "px-vis": "^5.0.0",
     "iron-resizable-behavior": "^2.0.0",
     "app-localize-behavior": "^2.0.0"
   },
@@ -58,7 +58,7 @@
     },
     "2.x": {
       "dependencies": {
-        "polymer": "^2.4.0-rc.1"
+        "polymer": "^2.4.0"
       }
     }
   },

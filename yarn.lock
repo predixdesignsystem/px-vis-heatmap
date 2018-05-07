@@ -265,6 +265,10 @@
   version "8.5.8"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.8.tgz#92509422653f10e9c0ac18d87e0610b39f9821c7"
 
+"@types/node@^9.3.0":
+  version "9.6.12"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-9.6.12.tgz#ab2d716505858ebc8ee94b347b5c9d311eb81b72"
+
 "@types/opn@^3.0.28":
   version "3.0.28"
   resolved "https://registry.yarnpkg.com/@types/opn/-/opn-3.0.28.tgz#097d0d1c9b5749573a5d96df132387bb6d02118a"
@@ -447,7 +451,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/which@^1.0.27":
+"@types/which@^1.0.27", "@types/which@^1.3.1":
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/@types/which/-/which-1.3.1.tgz#7802c380887986ca909008afea4e08025b130f8d"
 
@@ -824,7 +828,7 @@ async@2.0.1:
   dependencies:
     lodash "^4.8.0"
 
-async@^2.0.0, async@^2.0.1, async@^2.1.2, async@^2.4.1:
+async@^2.0.0, async@^2.0.1, async@^2.1.2, async@^2.1.4, async@^2.4.1:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.0.tgz#61a29abb6fcc026fea77e56d1c6ec53a795951f4"
   dependencies:
@@ -2324,6 +2328,16 @@ cross-spawn@^5.0.1, cross-spawn@^5.1.0:
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-5.1.0.tgz#e8bd0efee58fcff6f8f94510a0a554bbfa235449"
   dependencies:
     lru-cache "^4.0.1"
+    shebang-command "^1.2.0"
+    which "^1.2.9"
+
+cross-spawn@^6.0.0:
+  version "6.0.5"
+  resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-6.0.5.tgz#4a5ec7c64dfae22c3a14124dbacdee846d80cbc4"
+  dependencies:
+    nice-try "^1.0.4"
+    path-key "^2.0.1"
+    semver "^5.5.0"
     shebang-command "^1.2.0"
     which "^1.2.9"
 
@@ -5005,6 +5019,17 @@ launchpad@^0.6.0:
     q "^1.4.1"
     underscore "^1.8.3"
 
+launchpad@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/launchpad/-/launchpad-0.7.0.tgz#f427d3c0e15e869ee15513828bafefc16f9c7bc3"
+  dependencies:
+    async "^2.0.1"
+    browserstack "^1.2.0"
+    debug "^2.2.0"
+    plist "^2.0.1"
+    q "^1.4.1"
+    underscore "^1.8.3"
+
 lazy-cache@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/lazy-cache/-/lazy-cache-2.0.2.tgz#b9190a4f913354694840859f8a8f7084d8822264"
@@ -5831,6 +5856,10 @@ netrc@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/netrc/-/netrc-0.1.4.tgz#6be94fcaca8d77ade0a9670dc460914c94472444"
 
+nice-try@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.4.tgz#d93962f6c52f2c1558c0fbda6d512819f1efe1c4"
+
 no-case@^2.2.0:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/no-case/-/no-case-2.3.2.tgz#60b813396be39b3f1288a4c1ed5d1e7d28b464ac"
@@ -6314,7 +6343,7 @@ path-is-inside@^1.0.1, path-is-inside@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/path-is-inside/-/path-is-inside-1.0.2.tgz#365417dede44430d1c11af61027facf074bdfc53"
 
-path-key@^2.0.0:
+path-key@^2.0.0, path-key@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/path-key/-/path-key-2.0.1.tgz#411cadb574c5a140d3a4b1910d40d80cc9f40b40"
 
@@ -6789,7 +6818,7 @@ progress@1.1.8:
   version "1.1.8"
   resolved "https://registry.yarnpkg.com/progress/-/progress-1.1.8.tgz#e260c78f6161cdd9b0e56cc3e0a85de17c7a57be"
 
-progress@^2.0.0:
+progress@2.0.0, progress@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/progress/-/progress-2.0.0.tgz#8a1be366bf8fc23db2bd23f10c6fe920b4389d1f"
 
@@ -7243,6 +7272,33 @@ request@2.81.0:
     tunnel-agent "^0.6.0"
     uuid "^3.0.0"
 
+request@^2.85.0:
+  version "2.85.0"
+  resolved "https://registry.yarnpkg.com/request/-/request-2.85.0.tgz#5a03615a47c61420b3eb99b7dba204f83603e1fa"
+  dependencies:
+    aws-sign2 "~0.7.0"
+    aws4 "^1.6.0"
+    caseless "~0.12.0"
+    combined-stream "~1.0.5"
+    extend "~3.0.1"
+    forever-agent "~0.6.1"
+    form-data "~2.3.1"
+    har-validator "~5.0.3"
+    hawk "~6.0.2"
+    http-signature "~1.2.0"
+    is-typedarray "~1.0.0"
+    isstream "~0.1.2"
+    json-stringify-safe "~5.0.1"
+    mime-types "~2.1.17"
+    oauth-sign "~0.8.2"
+    performance-now "^2.1.0"
+    qs "~6.5.1"
+    safe-buffer "^5.1.1"
+    stringstream "~0.0.5"
+    tough-cookie "~2.3.3"
+    tunnel-agent "^0.6.0"
+    uuid "^3.1.0"
+
 require-directory@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
@@ -7407,6 +7463,24 @@ selenium-standalone@^5.8.0:
     which "1.1.1"
     yauzl "^2.5.0"
 
+selenium-standalone@^6.7.0:
+  version "6.14.0"
+  resolved "https://registry.yarnpkg.com/selenium-standalone/-/selenium-standalone-6.14.0.tgz#b49dab2055c827fc90feb0c7a3877e0aa0a94b7d"
+  dependencies:
+    async "^2.1.4"
+    commander "^2.9.0"
+    cross-spawn "^6.0.0"
+    debug "^3.0.0"
+    lodash "^4.17.4"
+    minimist "^1.2.0"
+    mkdirp "^0.5.1"
+    progress "2.0.0"
+    request "2.79.0"
+    tar-stream "1.5.2"
+    urijs "^1.18.4"
+    which "^1.2.12"
+    yauzl "^2.5.0"
+
 semver-diff@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/semver-diff/-/semver-diff-2.1.0.tgz#4bbb8437c8d37e4b0cf1a68fd726ec6d645d6d36"
@@ -7420,6 +7494,10 @@ semver-diff@^2.0.0:
 semver@^4.1.0:
   version "4.3.6"
   resolved "https://registry.yarnpkg.com/semver/-/semver-4.3.6.tgz#300bc6e0e86374f7ba61068b5b1ecd57fc6532da"
+
+semver@^5.5.0:
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-5.5.0.tgz#dc4bbc7a6ca9d916dee5d43516f0092b58f7b8ab"
 
 semver@~5.0.1:
   version "5.0.3"
@@ -8658,6 +8736,10 @@ urijs@^1.16.1:
   version "1.19.0"
   resolved "https://registry.yarnpkg.com/urijs/-/urijs-1.19.0.tgz#d8aa284d0e7469703a6988ad045c4cbfdf08ada0"
 
+urijs@^1.18.4:
+  version "1.19.1"
+  resolved "https://registry.yarnpkg.com/urijs/-/urijs-1.19.1.tgz#5b0ff530c0cbde8386f6342235ba5ca6e995d25a"
+
 urix@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/urix/-/urix-0.1.0.tgz#da937f7a62e21fec1fd18d49b35c2935067a6c72"
@@ -8886,6 +8968,35 @@ wct-local@^2.0.16:
     selenium-standalone "^5.8.0"
     which "^1.0.8"
 
+wct-local@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/wct-local/-/wct-local-2.1.0.tgz#8c66517295094328645bb571d419a87642cc6120"
+  dependencies:
+    "@types/express" "^4.0.30"
+    "@types/freeport" "^1.0.19"
+    "@types/launchpad" "^0.6.0"
+    "@types/node" "^9.3.0"
+    "@types/which" "^1.3.1"
+    chalk "^2.3.0"
+    cleankill "^2.0.0"
+    freeport "^1.0.4"
+    launchpad "^0.7.0"
+    promisify-node "^0.4.0"
+    selenium-standalone "^6.7.0"
+    which "^1.0.8"
+
+wct-sauce@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/wct-sauce/-/wct-sauce-2.0.1.tgz#74eb891ce3a1ac352e90c177be3c310cdadc607e"
+  dependencies:
+    chalk "^1.1.1"
+    cleankill "^2.0.0"
+    lodash "^3.0.1"
+    request "^2.85.0"
+    sauce-connect-launcher "^1.0.0"
+    temp "^0.8.1"
+    uuid "^2.0.1"
+
 wct-sauce@^2.0.0-pre.2:
   version "2.0.0-pre.3"
   resolved "https://registry.yarnpkg.com/wct-sauce/-/wct-sauce-2.0.0-pre.3.tgz#6675bd0deeacdb151b233d7ff92d056c93b7a520"
@@ -8946,6 +9057,42 @@ web-component-tester@^6.3.0:
     update-notifier "^2.2.0"
     wct-local "^2.0.16"
     wct-sauce "^2.0.0-pre.2"
+
+web-component-tester@^6.5.0:
+  version "6.5.0"
+  resolved "https://registry.yarnpkg.com/web-component-tester/-/web-component-tester-6.5.0.tgz#3dbad2695f703b9325687f859582f57b59128ea2"
+  dependencies:
+    "@polymer/sinonjs" "^1.14.1"
+    "@polymer/test-fixture" "^0.0.3"
+    "@webcomponents/webcomponentsjs" "^1.0.7"
+    accessibility-developer-tools "^2.12.0"
+    async "^2.4.1"
+    body-parser "^1.17.2"
+    chai "^4.0.2"
+    chalk "^1.1.3"
+    cleankill "^2.0.0"
+    express "^4.15.3"
+    findup-sync "^1.0.0"
+    glob "^7.1.2"
+    lodash "^3.10.1"
+    mocha "^3.4.2"
+    multer "^1.3.0"
+    nomnom "^1.8.1"
+    polyserve "^0.23.0"
+    promisify-node "^0.4.0"
+    resolve "^1.3.3"
+    semver "^5.3.0"
+    send "^0.11.1"
+    server-destroy "^1.0.1"
+    sinon "^2.3.5"
+    sinon-chai "^2.10.0"
+    socket.io "^2.0.3"
+    stacky "^1.3.1"
+    wd "^1.2.0"
+  optionalDependencies:
+    update-notifier "^2.2.0"
+    wct-local "^2.1.0"
+    wct-sauce "^2.0.0"
 
 which-module@^1.0.0:
   version "1.0.0"
