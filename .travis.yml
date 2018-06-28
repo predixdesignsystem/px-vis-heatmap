@@ -1,8 +1,9 @@
 sudo: true
 dist: trusty
 language: node_js
-node_js: 9
-
+node_js: 
+  - 9
+  
 cache:
   yarn: true
   directories:
